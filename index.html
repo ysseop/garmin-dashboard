@@ -3,363 +3,213 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>러닝 대시보드</title>
+<title>Training Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-  :root {
-    --bg: #f6f7f9; --card: #ffffff; --text: #1c1f24; --muted: #6b7280;
-    --line: #e5e7eb; --accent: #2563eb; --ok: #15803d; --warn: #b45309; --bad: #b91c1c;
-    --ok-bg: #dcfce7; --warn-bg: #fef3c7; --bad-bg: #fee2e2;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0f1115; --card: #181b21; --text: #e8eaee; --muted: #9aa3b2;
-      --line: #2a2f38; --accent: #60a5fa; --ok: #86efac; --warn: #fcd34d; --bad: #fca5a5;
-      --ok-bg: #14301f; --warn-bg: #3a2c0b; --bad-bg: #3b1515;
-    }
-  }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--text);
-    font-family: -apple-system, "Segoe UI", "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; }
-  .wrap { max-width: 980px; margin: 0 auto; padding: 16px; }
-  header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-  h1 { font-size: 20px; margin: 0; }
-  h2 { font-size: 15px; margin: 0 0 10px; }
-  .btns button { margin-left: 6px; }
-  button { background: var(--card); color: var(--text); border: 1px solid var(--line);
-    border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer; }
-  button.primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-  .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px;
-    padding: 14px; margin-bottom: 12px; }
-  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; margin-bottom: 12px; }
-  .stat { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 12px; }
-  .stat .label { font-size: 12px; color: var(--muted); }
-  .stat .value { font-size: 22px; font-weight: 700; margin-top: 4px; }
-  .stat .unit { font-size: 12px; color: var(--muted); font-weight: 400; margin-left: 2px; }
-  .alert { border-radius: 12px; padding: 12px 14px; margin-bottom: 12px; font-size: 14px; line-height: 1.5; }
-  .alert.ok { background: var(--ok-bg); color: var(--ok); }
-  .alert.warn { background: var(--warn-bg); color: var(--warn); }
-  .alert.bad { background: var(--bad-bg); color: var(--bad); }
-  .alert.neutral { background: var(--card); color: var(--muted); border: 1px solid var(--line); }
-  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  @media (max-width: 720px) { .grid2 { grid-template-columns: 1fr; } }
-  .chart-box { position: relative; height: 260px; }
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--line); white-space: nowrap; }
-  th { color: var(--muted); font-weight: 600; }
-  td.num, th.num { text-align: right; }
-  .setup { max-width: 460px; margin: 40px auto; }
-  .setup label { display: block; font-size: 13px; color: var(--muted); margin: 12px 0 4px; }
-  .setup input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--line);
-    background: var(--bg); color: var(--text); font-size: 14px; }
-  .err { color: var(--bad); font-size: 13px; margin-top: 10px; min-height: 18px; }
-  .hint { color: var(--muted); font-size: 12px; margin-top: 12px; line-height: 1.5; }
-  .hidden { display: none; }
-  .center { text-align: center; color: var(--muted); padding: 60px 0; }
+:root{--bg:#0b0e17;--bg2:#141a2b;--card:rgba(255,255,255,.05);--bd:rgba(255,255,255,.09);--tx:#eef1f8;--mu:#8e98b3;--a1:#8b5cf6;--a2:#22d3ee;--hot:#fb7185;--ok:#34d399;--wn:#fbbf24}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5fb;--bg2:#e6eaf7;--card:#fff;--bd:#e3e7f2;--tx:#161a29;--mu:#667090}}
+*{box-sizing:border-box}
+body{margin:0;color:var(--tx);font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:radial-gradient(900px 500px at 10% -10%,#3b2a7a55,transparent),radial-gradient(800px 500px at 100% 0,#0e7490444,transparent),linear-gradient(var(--bg),var(--bg2)) fixed}
+.w{max-width:1000px;margin:0 auto;padding:18px 14px 40px}
+.hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
+h1{font-size:22px;margin:0;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
+h2{font-size:14px;margin:0 0 10px;color:var(--mu);font-weight:600;letter-spacing:.3px}
+.sec{font-size:12px;color:var(--mu);margin:18px 2px 8px;letter-spacing:1.5px}
+button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
+button.on,button.pri{background:linear-gradient(90deg,var(--a1),var(--a2));border-color:transparent;color:#fff}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px;backdrop-filter:blur(8px)}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.g2{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:12px}
+@media(max-width:720px){.g2{grid-template-columns:1fr}}
+.k{font-size:12px;color:var(--mu)}
+.v{font-size:28px;font-weight:800;margin-top:4px;line-height:1.1}
+.v small{font-size:13px;font-weight:500;color:var(--mu);margin-left:3px}
+.sub{font-size:12px;color:var(--mu);margin-top:6px}
+.hint{border-radius:18px;padding:14px 16px;margin-bottom:12px;font-size:14px;line-height:1.55;border:1px solid var(--bd)}
+.hint.ok{background:#34d3991f;color:var(--ok)}.hint.wn{background:#fbbf241f;color:var(--wn)}.hint.bad{background:#fb71851f;color:var(--hot)}.hint.nu{background:var(--card);color:var(--mu)}
+.cb{position:relative;height:250px}
+.seg{display:flex;gap:6px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 6px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
+th{color:var(--mu);font-weight:600}.n{text-align:right}
+.tw{overflow-x:auto}
+.setup{max-width:440px;margin:50px auto}
+.setup label{display:block;font-size:13px;color:var(--mu);margin:14px 0 5px}
+.setup input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:14px}
+.err{color:var(--hot);font-size:13px;min-height:18px;margin-top:10px}
+.hide{display:none}.ctr{text-align:center;color:var(--mu);padding:80px 0}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="w">
+<div id="setup" class="card setup hide">
+  <h2>처음 한 번만 설정해 주세요</h2>
+  <label for="u">웹앱 주소 (/exec 로 끝나는 주소)</label><input id="u" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
+  <label for="k">API 키</label><input id="k" type="password" autocomplete="off">
+  <div style="margin-top:16px"><button class="pri" id="save">저장하고 불러오기</button></div>
+  <div class="err" id="err"></div>
+  <div class="sub">입력한 값은 이 기기의 브라우저에만 저장돼요.</div>
+</div>
+<div id="load" class="ctr hide">불러오는 중...</div>
 
-  <!-- 처음 접속할 때 한 번만 입력 -->
-  <div id="setup" class="card setup hidden">
-    <h2>처음 한 번만 설정해 주세요</h2>
-    <label for="inUrl">웹앱 주소 (/exec 로 끝나는 주소)</label>
-    <input id="inUrl" type="text" autocomplete="off" placeholder="https://script.google.com/macros/s/.../exec">
-    <label for="inKey">API 키</label>
-    <input id="inKey" type="password" autocomplete="off" placeholder="키를 입력하세요">
-    <div style="margin-top:16px"><button class="primary" id="saveBtn">저장하고 불러오기</button></div>
-    <div class="err" id="err"></div>
-    <div class="hint">입력한 값은 이 기기의 브라우저에만 저장돼요. 다른 기기에서는 한 번씩 다시 입력해야 합니다.</div>
+<div id="dash" class="hide">
+  <div class="hd"><h1>Training Dashboard</h1>
+    <div class="seg"><button id="rf">새로고침</button><button id="rs">설정 초기화</button></div></div>
+
+  <div id="hint" class="hint nu"></div>
+
+  <div class="sec">오늘의 컨디션</div>
+  <div class="grid" id="cond"></div>
+
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">
+    <span>운동 요약 (최근 28일)</span>
+    <span class="seg" id="seg"><button data-g="hiit" class="on">HIIT</button><button data-g="run">러닝</button><button data-g="all">전체</button></span></div>
+  <div class="grid" id="sum"></div>
+
+  <div class="g2">
+    <div class="card"><h2>주간 운동 시간 (분, 12주)</h2><div class="cb"><canvas id="c1"></canvas></div></div>
+    <div class="card"><h2>세션별 심박과 무산소 효과</h2><div class="cb"><canvas id="c2"></canvas></div></div>
   </div>
-
-  <div id="loading" class="center hidden">데이터를 불러오는 중...</div>
-
-  <div id="dash" class="hidden">
-    <header>
-      <h1>러닝 대시보드</h1>
-      <div class="btns">
-        <button id="refreshBtn">새로고침</button>
-        <button id="resetBtn">설정 초기화</button>
-      </div>
-    </header>
-
-    <div id="alert" class="alert neutral"></div>
-    <div class="stats" id="stats"></div>
-
-    <div class="card">
-      <h2>주간 거리 (최근 12주)</h2>
-      <div class="chart-box"><canvas id="chWeekly"></canvas></div>
-    </div>
-
-    <div class="grid2">
-      <div class="card">
-        <h2>페이스와 평균 심박 (최근 러닝 20회)</h2>
-        <div class="chart-box"><canvas id="chPace"></canvas></div>
-      </div>
-      <div class="card">
-        <h2>심박 존 분포 (최근 4주)</h2>
-        <div class="chart-box"><canvas id="chZone"></canvas></div>
-        <div class="hint" id="zoneNote"></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h2>최근 러닝</h2>
-      <div class="table-wrap">
-        <table>
-          <thead><tr><th>날짜</th><th>이름</th><th class="num">거리</th><th class="num">페이스</th><th class="num">평균 심박</th></tr></thead>
-          <tbody id="recent"></tbody>
-        </table>
-      </div>
-    </div>
+  <div class="g2">
+    <div class="card"><h2>심박 존 분포 (28일)</h2><div class="cb"><canvas id="c3"></canvas></div><div class="sub" id="zn"></div></div>
+    <div class="card"><h2>HRV 추이 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
   </div>
+  <div class="card" style="margin-top:12px"><h2>수면 (최근 14일, 시간)</h2><div class="cb"><canvas id="c5"></canvas></div><div class="sub" id="sn"></div></div>
+
+  <div class="sec">최근 세션</div>
+  <div class="card"><div class="tw"><table>
+    <thead><tr><th>날짜</th><th>이름</th><th class="n">시간</th><th class="n">평균 심박</th><th class="n">최대</th><th class="n">무산소 TE</th><th class="n">부하</th><th class="n">kcal</th></tr></thead>
+    <tbody id="tb"></tbody></table></div></div>
+</div>
 </div>
 
 <script>
-var RUN_TYPES = ['running', 'trail_running', 'treadmill_running', 'track_running'];
-var DAY = 24 * 60 * 60 * 1000;
-var charts = {};
+var RUN=['running','trail_running','treadmill_running','track_running'],DAY=864e5,ch={},grp='hiit',D=null;
+var $=function(i){return document.getElementById(i)};
+function st(op,k,v){try{if(op==='g')return localStorage.getItem(k);if(op==='s')localStorage.setItem(k,v);if(op==='d')localStorage.removeItem(k)}catch(e){}return null}
+function show(w){['setup','load','dash'].forEach(function(i){$(i).classList.toggle('hide',i!==w)})}
+function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
+function num(v){return(v===''||v==null||isNaN(Number(v)))?null:Number(v)}
+function md(d){return(d.getMonth()+1)+'/'+d.getDate()}
+function pd(s){return new Date(String(s).replace(' ','T'))}
+function hm(sec){return sec==null?'-':Math.floor(sec/3600)+'시간 '+Math.round(sec%3600/60)+'분'}
+function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+function gOf(t){return t==='hiit'?'hiit':(RUN.indexOf(t)>=0?'run':'etc')}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function stat(box,k,v,u,s){var c=el('div','card');c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));box.appendChild(c)}
+function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
 
-function $(id) { return document.getElementById(id); }
-function store(op, k, v) {
-  try {
-    if (op === 'get') return localStorage.getItem(k);
-    if (op === 'set') localStorage.setItem(k, v);
-    if (op === 'del') localStorage.removeItem(k);
-  } catch (e) {}
-  return null;
-}
-function show(which) {
-  ['setup', 'loading', 'dash'].forEach(function (id) {
-    $(id).classList.toggle('hidden', id !== which);
-  });
-}
-function cssVar(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
-
-function fmtPace(secPerKm) {
-  if (!isFinite(secPerKm) || secPerKm <= 0) return '-';
-  var m = Math.floor(secPerKm / 60);
-  var s = Math.round(secPerKm - m * 60);
-  if (s === 60) { m += 1; s = 0; }
-  return m + ':' + (s < 10 ? '0' : '') + s;
-}
-function fmtDate(d) {
-  return (d.getMonth() + 1) + '/' + d.getDate();
-}
-function weekStart(d) {
-  var x = new Date(d);
-  x.setHours(0, 0, 0, 0);
-  x.setDate(x.getDate() - ((x.getDay() + 6) % 7)); // 월요일 시작
-  return x;
+async function load(){
+  var u=st('g','garminUrl'),k=st('g','garminKey');
+  if(!u||!k){show('setup');return}
+  show('load');
+  try{
+    var r=await fetch(u+'?key='+encodeURIComponent(k)),d=await r.json();
+    if(!d.ok)throw new Error(d.error==='unauthorized'?'키가 맞지 않아요.':'데이터를 불러오지 못했어요.');
+    D=d;render();show('dash');
+  }catch(e){$('err').textContent=e.message||'불러오지 못했어요. 주소와 키를 확인해 주세요.';show('setup')}
 }
 
-async function load() {
-  var url = store('get', 'garminUrl');
-  var key = store('get', 'garminKey');
-  if (!url || !key) { show('setup'); return; }
-  show('loading');
-  try {
-    var res = await fetch(url + '?key=' + encodeURIComponent(key));
-    var data = await res.json();
-    if (!data.ok) {
-      throw new Error(data.error === 'unauthorized' ? '키가 맞지 않아요. 다시 확인해 주세요.' : '데이터를 불러오지 못했어요.');
-    }
-    render(data.rows || []);
-    show('dash');
-  } catch (e) {
-    $('err').textContent = (e && e.message) ? e.message : '불러오지 못했어요. 주소와 키를 확인해 주세요.';
-    show('setup');
+function render(){
+  var now=new Date(),t28=new Date(now-28*DAY),t7=new Date(now-7*DAY);
+  var acts=(D.rows||[]).map(function(r){return{d:pd(r.startTime),g:gOf(r.type),name:r.name||r.type,min:(num(r.durationSec)||0)/60,
+    hr:num(r.avgHR),mx:num(r.maxHR),an:num(r.anaerobicTE),tl:num(r.trainingLoad),kc:num(r.calories),km:num(r.distanceKm)||0,
+    z:[1,2,3,4,5].map(function(i){return num(r['z'+i+'Sec'])||0})}}).filter(function(a){return!isNaN(a.d.getTime())}).sort(function(a,b){return a.d-b.d});
+  var well=(D.wellness||[]).map(function(w){return{d:new Date(String(w.date)+'T00:00:00'),sl:num(w.sleepSec),dp:num(w.deepSec),lt:num(w.lightSec),rm:num(w.remSec),aw:num(w.awakeSec),
+    sc:num(w.sleepScore),hv:num(w.hrvLastNight),hw:num(w.hrvWeeklyAvg),hs:w.hrvStatus||'',rh:num(w.restingHR),bh:num(w.bodyBatteryHigh),bl:num(w.bodyBatteryLow),
+    ss:num(w.avgStress),rd:num(w.trainingReadiness)}}).filter(function(w){return!isNaN(w.d.getTime())}).sort(function(a,b){return a.d-b.d});
+  var sel=acts.filter(function(a){return grp==='all'||a.g===grp}),s28=sel.filter(function(a){return a.d>t28});
+  var tw=well.filter(function(w){return w.sl||w.hv||w.rd||w.rh}).pop();
+
+  // 오늘의 한줄 (규칙 기반)
+  var h=$('hint'),hi7=acts.filter(function(a){return a.g==='hiit'&&a.d>t7}).length,bad=[],wn=[];
+  if(tw){
+    if(tw.rd!=null&&tw.rd<40)bad.push('훈련 준비도 '+tw.rd);
+    if(tw.sc!=null&&tw.sc<60)wn.push('수면 점수 '+tw.sc);
+    if(tw.hs&&tw.hs!=='BALANCED')wn.push('HRV 상태 '+tw.hs);
   }
+  if(hi7>=4)wn.push('최근 7일 HIIT '+hi7+'회');
+  if(!tw&&!acts.length){h.className='hint nu';h.textContent='아직 데이터가 없어요. 동기화가 끝나면 표시됩니다.'}
+  else if(bad.length){h.className='hint bad';h.textContent='회복이 부족해 보여요 ('+bad.concat(wn).join(', ')+'). 오늘은 강도를 낮추거나 쉬어가는 걸 권해요.'}
+  else if(wn.length){h.className='hint wn';h.textContent='주의 신호: '+wn.join(', ')+'. 고강도는 가볍게 가져가거나 회복 시간을 챙겨보세요.'}
+  else{h.className='hint ok';h.textContent=tw?'컨디션이 양호해요. 계획한 훈련을 진행해도 좋아요.':'최근 운동 기록을 불러왔어요. 건강 데이터는 동기화 후 표시됩니다.'}
+
+  // 컨디션 카드
+  var c=$('cond');c.textContent='';
+  if(tw){
+    stat(c,'수면',tw.sl?hm(tw.sl):'-','',tw.sc!=null?'점수 '+tw.sc:'');
+    stat(c,'HRV(지난밤)',tw.hv!=null?tw.hv:'-','ms',tw.hw!=null?'주평균 '+tw.hw+(tw.hs?' · '+tw.hs:''):tw.hs);
+    stat(c,'바디배터리',tw.bh!=null?tw.bh:'-','',tw.bl!=null?'최저 '+tw.bl:'');
+    stat(c,'안정시 심박',tw.rh!=null?tw.rh:'-','bpm',tw.ss!=null?'스트레스 '+tw.ss:'');
+    stat(c,'훈련 준비도',tw.rd!=null?tw.rd:'-','',tw.d?md(tw.d)+' 기준':'');
+  }else stat(c,'건강 데이터','없음','','wellness 시트에 데이터가 들어오면 표시돼요');
+
+  // 운동 요약
+  var sm=$('sum');sm.textContent='';
+  var tm=s28.reduce(function(a,x){return a+x.min},0),hrs=s28.filter(function(x){return x.hr}),an=s28.filter(function(x){return x.an!=null});
+  stat(sm,'세션 수',s28.length,'회','주평균 '+(s28.length/4).toFixed(1)+'회');
+  stat(sm,'총 운동 시간',Math.round(tm),'분','');
+  stat(sm,'평균 심박',hrs.length?Math.round(hrs.reduce(function(a,x){return a+x.hr},0)/hrs.length):'-','bpm','');
+  stat(sm,'평균 무산소 효과',an.length?(an.reduce(function(a,x){return a+x.an},0)/an.length).toFixed(1):'-','','');
+  stat(sm,'소모 칼로리',Math.round(s28.reduce(function(a,x){return a+(x.kc||0)},0)),'kcal','');
+
+  Chart.defaults.color=cv('--mu');Chart.defaults.borderColor=cv('--bd');
+  var A1=cv('--a1'),A2=cv('--a2'),HOT=cv('--hot');
+
+  // 주간 운동 시간 (종류별 누적)
+  var tw0=wk(now),lb=[],ser={hiit:[],run:[],etc:[]};
+  for(var i=11;i>=0;i--){var ws=new Date(tw0);ws.setDate(ws.getDate()-7*i);var we=new Date(ws);we.setDate(we.getDate()+7);lb.push(md(ws));
+    ['hiit','run','etc'].forEach(function(g){ser[g].push(Math.round(acts.filter(function(a){return a.g===g&&a.d>=ws&&a.d<we}).reduce(function(s,a){return s+a.min},0)))})}
+  draw('c1','c1',{type:'bar',data:{labels:lb,datasets:[{label:'HIIT',data:ser.hiit,backgroundColor:A1},{label:'러닝',data:ser.run,backgroundColor:A2},{label:'기타',data:ser.etc,backgroundColor:'#64748b'}]},
+    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+
+  // 세션별 심박 + 무산소 효과
+  var r15=sel.slice(-15);
+  draw('c2','c2',{data:{labels:r15.map(function(a){return md(a.d)}),datasets:[
+    {type:'bar',label:'무산소 TE',data:r15.map(function(a){return a.an}),backgroundColor:A1+'aa',yAxisID:'y1',borderRadius:4},
+    {type:'line',label:'평균 심박',data:r15.map(function(a){return a.hr}),borderColor:A2,backgroundColor:A2,tension:.3},
+    {type:'line',label:'최대 심박',data:r15.map(function(a){return a.mx}),borderColor:HOT,backgroundColor:HOT,tension:.3}]},
+    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'bpm'}},y1:{position:'right',min:0,max:5,grid:{drawOnChartArea:false}}}}});
+
+  // 심박 존
+  var zs=[0,0,0,0,0];s28.forEach(function(a){a.z.forEach(function(v,i){zs[i]+=v})});var zt=zs.reduce(function(a,b){return a+b},0);
+  draw('c3','c3',{type:'bar',data:{labels:['존1','존2','존3','존4','존5'],datasets:[{data:zs.map(function(v){return zt?+(v/zt*100).toFixed(1):0}),
+    backgroundColor:['#94a3b8','#34d399','#fbbf24','#fb923c','#fb7185'],borderRadius:6}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,title:{display:true,text:'%'}}}}});
+  $('zn').textContent=zt?'':'심박 존 데이터가 아직 없어요.';
+
+  // HRV
+  var w30=well.filter(function(w){return w.d>new Date(now-30*DAY)});
+  draw('c4','c4',{type:'line',data:{labels:w30.map(function(w){return md(w.d)}),datasets:[
+    {label:'지난밤 평균',data:w30.map(function(w){return w.hv}),borderColor:A2,backgroundColor:A2,tension:.3,spanGaps:true},
+    {label:'주평균',data:w30.map(function(w){return w.hw}),borderColor:A1,backgroundColor:A1,borderDash:[5,4],tension:.3,spanGaps:true,pointRadius:0}]},
+    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'ms'}}}}});
+  $('hn').textContent=w30.some(function(w){return w.hv!=null})?'':'HRV 데이터가 아직 없어요.';
+
+  // 수면
+  var w14=well.filter(function(w){return w.sl}).slice(-14),H=function(v){return v==null?0:+(v/3600).toFixed(2)};
+  draw('c5','c5',{type:'bar',data:{labels:w14.map(function(w){return md(w.d)}),datasets:[
+    {label:'깊은 수면',data:w14.map(function(w){return H(w.dp)}),backgroundColor:A1},
+    {label:'얕은 수면',data:w14.map(function(w){return H(w.lt)}),backgroundColor:A2+'99'},
+    {label:'REM',data:w14.map(function(w){return H(w.rm)}),backgroundColor:'#f472b6'},
+    {label:'깸',data:w14.map(function(w){return H(w.aw)}),backgroundColor:'#64748b'}]},
+    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+  $('sn').textContent=w14.length?'':'수면 데이터가 아직 없어요.';
+
+  // 표
+  var tb=$('tb');tb.textContent='';
+  sel.slice(-8).reverse().forEach(function(a){var tr=el('tr');
+    [[a.d.getFullYear()+'-'+String(a.d.getMonth()+1).padStart(2,'0')+'-'+String(a.d.getDate()).padStart(2,'0'),''],[a.name,''],
+     [Math.round(a.min)+'분','n'],[a.hr||'-','n'],[a.mx||'-','n'],[a.an!=null?a.an:'-','n'],[a.tl||'-','n'],[a.kc||'-','n']].forEach(function(c){tr.appendChild(el('td',c[1],String(c[0])))});
+    tb.appendChild(tr)});
 }
 
-function parseRuns(rows) {
-  return rows
-    .filter(function (r) { return RUN_TYPES.indexOf(r.type) >= 0 && Number(r.distanceKm) > 0; })
-    .map(function (r) {
-      return {
-        d: new Date(String(r.startTime).replace(' ', 'T')),
-        name: r.name || '',
-        km: Number(r.distanceKm),
-        sec: Number(r.durationSec) || 0,
-        hr: Number(r.avgHR) || null,
-        z: [1, 2, 3, 4, 5].map(function (i) { return Number(r['z' + i + 'Sec']) || 0; })
-      };
-    })
-    .filter(function (r) { return !isNaN(r.d.getTime()); })
-    .sort(function (a, b) { return a.d - b.d; });
-}
-
-function sumKm(runs, from, to) {
-  return runs.filter(function (r) { return r.d > from && r.d <= to; })
-    .reduce(function (a, r) { return a + r.km; }, 0);
-}
-
-function render(rows) {
-  var runs = parseRuns(rows);
-  var now = new Date();
-  var t7 = new Date(now - 7 * DAY), t14 = new Date(now - 14 * DAY), t28 = new Date(now - 28 * DAY);
-
-  var last7 = sumKm(runs, t7, now);
-  var prev7 = sumKm(runs, t14, t7);
-  var runs28 = runs.filter(function (r) { return r.d > t28; });
-  var km28 = runs28.reduce(function (a, r) { return a + r.km; }, 0);
-  var sec28 = runs28.reduce(function (a, r) { return a + r.sec; }, 0);
-  var count7 = runs.filter(function (r) { return r.d > t7; }).length;
-  var longest = runs28.reduce(function (a, r) { return Math.max(a, r.km); }, 0);
-
-  // 주간 증가율 안내
-  var box = $('alert');
-  if (!runs.length) {
-    box.className = 'alert neutral';
-    box.textContent = '아직 러닝 기록이 없어요. 동기화가 끝나면 여기에 표시됩니다.';
-  } else if (prev7 === 0 && last7 > 0) {
-    box.className = 'alert neutral';
-    box.textContent = '직전 7일에 러닝 기록이 없어서 증가율은 계산하지 않았어요. 지난 7일 거리는 ' + last7.toFixed(1) + 'km 입니다.';
-  } else if (prev7 === 0) {
-    box.className = 'alert neutral';
-    box.textContent = '최근 2주간 러닝 기록이 없어요.';
-  } else {
-    var change = (last7 / prev7 - 1) * 100;
-    var txt = '지난 7일 거리 ' + last7.toFixed(1) + 'km, 직전 7일 ' + prev7.toFixed(1) + 'km (' + (change >= 0 ? '+' : '') + change.toFixed(0) + '%). ';
-    if (change > 30) {
-      box.className = 'alert bad';
-      box.textContent = txt + '주간 거리가 많이 늘었어요. 이렇게 급하게 늘리면 부상 위험이 커져서, 이번 주는 강도나 거리를 조금 낮추는 걸 고려해 보세요.';
-    } else if (change > 10) {
-      box.className = 'alert warn';
-      box.textContent = txt + '증가폭이 다소 커요. 일반적으로 주간 거리는 10% 안팎으로 늘리는 걸 권해요.';
-    } else {
-      box.className = 'alert ok';
-      box.textContent = txt + '무리 없는 범위예요.';
-    }
-  }
-
-  // 요약 카드
-  var stats = [
-    ['지난 7일 거리', last7.toFixed(1), 'km'],
-    ['지난 7일 러닝', String(count7), '회'],
-    ['4주 주평균 거리', (km28 / 4).toFixed(1), 'km'],
-    ['4주 평균 페이스', km28 > 0 ? fmtPace(sec28 / km28) : '-', '/km'],
-    ['4주 최장 거리', longest.toFixed(1), 'km']
-  ];
-  $('stats').textContent = '';
-  stats.forEach(function (s) {
-    var el = document.createElement('div');
-    el.className = 'stat';
-    var l = document.createElement('div'); l.className = 'label'; l.textContent = s[0];
-    var v = document.createElement('div'); v.className = 'value'; v.textContent = s[1];
-    var u = document.createElement('span'); u.className = 'unit'; u.textContent = s[2];
-    v.appendChild(u); el.appendChild(l); el.appendChild(v);
-    $('stats').appendChild(el);
-  });
-
-  Chart.defaults.color = cssVar('--muted');
-  Chart.defaults.borderColor = cssVar('--line');
-  var accent = cssVar('--accent');
-
-  // 주간 거리
-  var thisWeek = weekStart(now);
-  var labels = [], values = [];
-  for (var i = 11; i >= 0; i--) {
-    var ws = new Date(thisWeek); ws.setDate(ws.getDate() - 7 * i);
-    var we = new Date(ws); we.setDate(we.getDate() + 7);
-    labels.push(fmtDate(ws));
-    values.push(Number(runs.filter(function (r) { return r.d >= ws && r.d < we; })
-      .reduce(function (a, r) { return a + r.km; }, 0).toFixed(1)));
-  }
-  drawChart('weekly', 'chWeekly', {
-    type: 'bar',
-    data: { labels: labels, datasets: [{ label: '거리(km)', data: values, backgroundColor: accent, borderRadius: 4 }] },
-    options: { maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-  });
-
-  // 페이스 + 심박
-  var recent20 = runs.slice(-20);
-  drawChart('pace', 'chPace', {
-    type: 'line',
-    data: {
-      labels: recent20.map(function (r) { return fmtDate(r.d); }),
-      datasets: [
-        { label: '페이스(분/km)', data: recent20.map(function (r) { return r.km > 0 ? r.sec / r.km : null; }),
-          borderColor: accent, backgroundColor: accent, yAxisID: 'y', tension: 0.25 },
-        { label: '평균 심박(bpm)', data: recent20.map(function (r) { return r.hr; }),
-          borderColor: '#ef4444', backgroundColor: '#ef4444', yAxisID: 'y1', tension: 0.25 }
-      ]
-    },
-    options: {
-      maintainAspectRatio: false,
-      interaction: { mode: 'index', intersect: false },
-      plugins: { tooltip: { callbacks: { label: function (c) {
-        return c.dataset.label.split('(')[0] + ': ' + (c.datasetIndex === 0 ? fmtPace(c.parsed.y) : c.parsed.y);
-      } } } },
-      scales: {
-        y: { reverse: true, ticks: { callback: function (v) { return fmtPace(v); } } },
-        y1: { position: 'right', grid: { drawOnChartArea: false } }
-      }
-    }
-  });
-
-  // 심박 존 분포
-  var zones = [0, 0, 0, 0, 0];
-  runs28.forEach(function (r) { r.z.forEach(function (s, i) { zones[i] += s; }); });
-  var zt = zones.reduce(function (a, b) { return a + b; }, 0);
-  drawChart('zone', 'chZone', {
-    type: 'bar',
-    data: {
-      labels: ['존1 (회복)', '존2 (가벼운 유산소)', '존3 (유산소)', '존4 (젖산 역치)', '존5 (최대)'],
-      datasets: [{ label: '비율(%)', data: zones.map(function (s) { return zt ? Number((s / zt * 100).toFixed(1)) : 0; }),
-        backgroundColor: ['#94a3b8', '#22c55e', '#eab308', '#f97316', '#ef4444'], borderRadius: 4 }]
-    },
-    options: { indexAxis: 'y', maintainAspectRatio: false, plugins: { legend: { display: false } },
-      scales: { x: { beginAtZero: true, max: 100 } } }
-  });
-  $('zoneNote').textContent = zt ? '' : '심박 존 데이터가 아직 없어요.';
-
-  // 최근 러닝 표
-  var tb = $('recent');
-  tb.textContent = '';
-  runs.slice(-10).reverse().forEach(function (r) {
-    var tr = document.createElement('tr');
-    var cells = [
-      [r.d.getFullYear() + '-' + String(r.d.getMonth() + 1).padStart(2, '0') + '-' + String(r.d.getDate()).padStart(2, '0'), ''],
-      [r.name, ''],
-      [r.km.toFixed(2) + ' km', 'num'],
-      [fmtPace(r.sec / r.km) + ' /km', 'num'],
-      [r.hr ? String(r.hr) : '-', 'num']
-    ];
-    cells.forEach(function (c) {
-      var td = document.createElement('td');
-      td.textContent = c[0];
-      if (c[1]) td.className = c[1];
-      tr.appendChild(td);
-    });
-    tb.appendChild(tr);
-  });
-}
-
-function drawChart(name, canvasId, config) {
-  if (charts[name]) charts[name].destroy();
-  charts[name] = new Chart($(canvasId), config);
-}
-
-$('saveBtn').addEventListener('click', function () {
-  var url = $('inUrl').value.trim();
-  var key = $('inKey').value.trim();
-  if (!url || !key) { $('err').textContent = '주소와 키를 모두 입력해 주세요.'; return; }
-  store('set', 'garminUrl', url);
-  store('set', 'garminKey', key);
-  $('err').textContent = '';
-  load();
-});
-$('refreshBtn').addEventListener('click', load);
-$('resetBtn').addEventListener('click', function () {
-  store('del', 'garminUrl');
-  store('del', 'garminKey');
-  $('inKey').value = '';
-  show('setup');
-});
-
+$('save').onclick=function(){var u=$('u').value.trim(),k=$('k').value.trim();if(!u||!k){$('err').textContent='주소와 키를 모두 입력해 주세요.';return}
+  st('s','garminUrl',u);st('s','garminKey',k);$('err').textContent='';load()};
+$('rf').onclick=load;
+$('rs').onclick=function(){st('d','garminUrl');st('d','garminKey');$('k').value='';show('setup')};
+$('seg').onclick=function(e){var g=e.target.getAttribute&&e.target.getAttribute('data-g');if(!g||!D)return;grp=g;
+  Array.prototype.forEach.call($('seg').children,function(b){b.classList.toggle('on',b===e.target)});render()};
 load();
 </script>
 </body>
