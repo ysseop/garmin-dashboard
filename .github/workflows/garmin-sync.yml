@@ -1,1 +1,32 @@
+name: Garmin Sync
 
+on:
+  schedule:
+    - cron: "0 21 * * *"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "days to fetch (first run: 90)"
+        default: "7"
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install libraries
+        run: pip install garminconnect requests
+
+      - name: Garmin sync
+        run: python scripts/garmin_sync.py
+        env:
+          GARMIN_EMAIL: ${{ secrets.GARMIN_EMAIL }}
+          GARMIN_PASSWORD: ${{ secrets.GARMIN_PASSWORD }}
+          WEBAPP_URL: ${{ secrets.WEBAPP_URL }}
+          API_KEY: ${{ secrets.API_KEY }}
+          DAYS: ${{ github.event.inputs.days || '7' }}
