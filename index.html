@@ -38,6 +38,11 @@ th{color:var(--mu);font-weight:600}.n{text-align:right}
 .setup input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:14px}
 .err{color:var(--hot);font-size:13px;min-height:18px;margin-top:10px}
 .hide{display:none}.ctr{text-align:center;color:var(--mu);padding:80px 0}
+button.on,button.pri{background-origin:border-box}
+.dl{font-size:14px;font-weight:700;margin-left:8px}.dl.up{color:#ef4444}.dl.dn{color:#3b82f6}.dl.eq{color:var(--mu)}
+select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:6px 12px;font-size:13px;letter-spacing:normal}
+select option{background:var(--bg2);color:var(--tx)}
+.seg{flex-wrap:wrap;align-items:center}
 </style>
 </head>
 <body>
@@ -58,12 +63,12 @@ th{color:var(--mu);font-weight:600}.n{text-align:right}
 
   <div id="hint" class="hint nu"></div>
 
-  <div class="sec">오늘의 컨디션</div>
+  <div class="sec">오늘의 컨디션 <span id="cd"></span></div>
   <div class="grid" id="cond"></div>
 
   <div class="sec" style="display:flex;justify-content:space-between;align-items:center">
-    <span>운동 요약 (최근 28일)</span>
-    <span class="seg" id="seg"><button data-g="hiit" class="on">HIIT</button><button data-g="run">러닝</button><button data-g="all">전체</button></span></div>
+    <span>운동 요약 <span id="pt"></span></span>
+    <span class="seg"><select id="per"></select><span class="seg" id="seg"><button data-g="hiit" class="on">HIIT</button><button data-g="run">러닝</button><button data-g="all">전체</button></span></span></div>
   <div class="grid" id="sum"></div>
 
   <div class="g2">
@@ -71,10 +76,10 @@ th{color:var(--mu);font-weight:600}.n{text-align:right}
     <div class="card"><h2>세션별 심박과 무산소 효과</h2><div class="cb"><canvas id="c2"></canvas></div></div>
   </div>
   <div class="g2">
-    <div class="card"><h2>심박 존 분포 (28일)</h2><div class="cb"><canvas id="c3"></canvas></div><div class="sub" id="zn"></div></div>
+    <div class="card"><h2>심박 존 분포 <span id="zt"></span></h2><div class="cb"><canvas id="c3"></canvas></div><div class="sub" id="zn"></div></div>
     <div class="card"><h2>HRV 추이 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
   </div>
-  <div class="card" style="margin-top:12px"><h2>수면 (최근 14일, 시간)</h2><div class="cb"><canvas id="c5"></canvas></div><div class="sub" id="sn"></div></div>
+  <div class="card" style="margin-top:12px"><h2>수면 (최근 14일, 시간)</h2><div id="sq" class="sub" style="margin:0 0 10px;line-height:1.7"></div><div class="cb"><canvas id="c5"></canvas></div><div class="sub" id="sn"></div></div>
 
   <div class="sec">최근 세션</div>
   <div class="card"><div class="tw"><table>
@@ -84,7 +89,7 @@ th{color:var(--mu);font-weight:600}.n{text-align:right}
 </div>
 
 <script>
-var RUN=['running','trail_running','treadmill_running','track_running'],DAY=864e5,ch={},grp='hiit',D=null;
+var RUN=['running','trail_running','treadmill_running','track_running'],DAY=864e5,ch={},grp='hiit',per='r28',D=null;
 var $=function(i){return document.getElementById(i)};
 function st(op,k,v){try{if(op==='g')return localStorage.getItem(k);if(op==='s')localStorage.setItem(k,v);if(op==='d')localStorage.removeItem(k)}catch(e){}return null}
 function show(w){['setup','load','dash'].forEach(function(i){$(i).classList.toggle('hide',i!==w)})}
@@ -93,10 +98,26 @@ function num(v){return(v===''||v==null||isNaN(Number(v)))?null:Number(v)}
 function md(d){return(d.getMonth()+1)+'/'+d.getDate()}
 function pd(s){return new Date(String(s).replace(' ','T'))}
 function hm(sec){return sec==null?'-':Math.floor(sec/3600)+'시간 '+Math.round(sec%3600/60)+'분'}
+function gr(s){return s==null?'':s>=90?'우수':s>=80?'좋음':s>=60?'보통':'나쁨'}
+function r1(v){return v==null?null:Math.round(v*10)/10}
+function range(now){
+  if(per==='r28')return{f:new Date(now-28*DAY),t:now,days:28,lab:'최근 28일'};
+  var p=per.split('-'),y=+p[0],m=+p[1]-1,f=new Date(y,m,1),e=new Date(y,m+1,1),cur=e>now,t=cur?now:e;
+  var lab=(m+1)+'월 1일~'+(cur?(now.getMonth()+1)+'월 '+now.getDate()+'일(현재)':(m+1)+'월 '+new Date(y,m+1,0).getDate()+'일');
+  return{f:f,t:t,days:Math.max(1,Math.ceil((t-f)/DAY)),lab:lab};
+}
+function buildPer(acts,now){
+  var s=$('per'),seen={},ks=[],cy=now.getFullYear(),ck=cy+'-'+(now.getMonth()+1);
+  acts.forEach(function(a){var k=a.d.getFullYear()+'-'+(a.d.getMonth()+1);if(!seen[k]){seen[k]=1;ks.push(k)}});
+  ks.reverse();s.textContent='';
+  var o=el('option','','최근 28일');o.value='r28';s.appendChild(o);
+  ks.forEach(function(k){var p=k.split('-'),o2=el('option','',p[1]+'월'+(+p[0]!==cy?' ('+p[0]+'년)':'')+(k===ck?' · 이번 달':''));o2.value=k;s.appendChild(o2)});
+  s.value=per;
+}
 function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
 function gOf(t){return t==='hiit'?'hiit':(RUN.indexOf(t)>=0?'run':'etc')}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
-function stat(box,k,v,u,s){var c=el('div','card');c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));box.appendChild(c)}
+function stat(box,k,v,u,s,dl){var c=el('div','card');c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));if(dl)x.appendChild(el('span','dl '+dl[0],dl[1]));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));box.appendChild(c)}
 function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
 
 async function load(){
@@ -113,12 +134,12 @@ async function load(){
 function render(){
   var now=new Date(),t28=new Date(now-28*DAY),t7=new Date(now-7*DAY);
   var acts=(D.rows||[]).map(function(r){return{d:pd(r.startTime),g:gOf(r.type),name:r.name||r.type,min:(num(r.durationSec)||0)/60,
-    hr:num(r.avgHR),mx:num(r.maxHR),an:num(r.anaerobicTE),tl:num(r.trainingLoad),kc:num(r.calories),km:num(r.distanceKm)||0,
+    hr:num(r.avgHR),mx:num(r.maxHR),an:r1(num(r.anaerobicTE)),tl:num(r.trainingLoad),kc:num(r.calories),km:num(r.distanceKm)||0,
     z:[1,2,3,4,5].map(function(i){return num(r['z'+i+'Sec'])||0})}}).filter(function(a){return!isNaN(a.d.getTime())}).sort(function(a,b){return a.d-b.d});
   var well=(D.wellness||[]).map(function(w){return{d:new Date(String(w.date)+'T00:00:00'),sl:num(w.sleepSec),dp:num(w.deepSec),lt:num(w.lightSec),rm:num(w.remSec),aw:num(w.awakeSec),
     sc:num(w.sleepScore),hv:num(w.hrvLastNight),hw:num(w.hrvWeeklyAvg),hs:w.hrvStatus||'',rh:num(w.restingHR),bh:num(w.bodyBatteryHigh),bl:num(w.bodyBatteryLow),
     ss:num(w.avgStress),rd:num(w.trainingReadiness)}}).filter(function(w){return!isNaN(w.d.getTime())}).sort(function(a,b){return a.d-b.d});
-  var sel=acts.filter(function(a){return grp==='all'||a.g===grp}),s28=sel.filter(function(a){return a.d>t28});
+  buildPer(acts,now);var sel=acts.filter(function(a){return grp==='all'||a.g===grp}),R=range(now),s28=sel.filter(function(a){return a.d>=R.f&&a.d<=R.t});
   var tw=well.filter(function(w){return w.sl||w.hv||w.rd||w.rh}).pop();
 
   // 오늘의 한줄 (규칙 기반)
@@ -135,19 +156,21 @@ function render(){
   else{h.className='hint ok';h.textContent=tw?'컨디션이 양호해요. 계획한 훈련을 진행해도 좋아요.':'최근 운동 기록을 불러왔어요. 건강 데이터는 동기화 후 표시됩니다.'}
 
   // 컨디션 카드
-  var c=$('cond');c.textContent='';
+  var c=$('cond');c.textContent='';$('cd').textContent='('+(now.getMonth()+1)+'월 '+now.getDate()+'일 '+'일월화수목금토'[now.getDay()]+'요일)';
   if(tw){
-    stat(c,'수면',tw.sl?hm(tw.sl):'-','',tw.sc!=null?'점수 '+tw.sc:'');
+    stat(c,'수면',tw.sl?hm(tw.sl):'-','',tw.sc!=null?'점수 '+tw.sc+' · '+gr(tw.sc):'');
     stat(c,'HRV(지난밤)',tw.hv!=null?tw.hv:'-','ms',tw.hw!=null?'주평균 '+tw.hw+(tw.hs?' · '+tw.hs:''):tw.hs);
     stat(c,'바디배터리',tw.bh!=null?tw.bh:'-','',tw.bl!=null?'최저 '+tw.bl:'');
     stat(c,'안정시 심박',tw.rh!=null?tw.rh:'-','bpm',tw.ss!=null?'스트레스 '+tw.ss:'');
-    stat(c,'훈련 준비도',tw.rd!=null?tw.rd:'-','',tw.d?md(tw.d)+' 기준':'');
+    var pv=well.filter(function(w){return w.rd!=null&&w.d<tw.d}).pop(),dl=null;
+    if(tw.rd!=null&&pv){var df=tw.rd-pv.rd;dl=df>0?['up','▲ '+df]:df<0?['dn','▼ '+(-df)]:['eq','– 0']}
+    stat(c,'훈련 준비도',tw.rd!=null?tw.rd:'-','',tw.d?md(tw.d)+' 기준'+(dl?' · 전일 대비':''):'',dl);
   }else stat(c,'건강 데이터','없음','','wellness 시트에 데이터가 들어오면 표시돼요');
 
   // 운동 요약
-  var sm=$('sum');sm.textContent='';
+  var sm=$('sum');sm.textContent='';$('pt').textContent='· '+R.lab;$('zt').textContent='· '+R.lab;
   var tm=s28.reduce(function(a,x){return a+x.min},0),hrs=s28.filter(function(x){return x.hr}),an=s28.filter(function(x){return x.an!=null});
-  stat(sm,'세션 수',s28.length,'회','주평균 '+(s28.length/4).toFixed(1)+'회');
+  stat(sm,'세션 수',s28.length,'회','주평균 '+(s28.length/(R.days/7)).toFixed(1)+'회');
   stat(sm,'총 운동 시간',Math.round(tm),'분','');
   stat(sm,'평균 심박',hrs.length?Math.round(hrs.reduce(function(a,x){return a+x.hr},0)/hrs.length):'-','bpm','');
   stat(sm,'평균 무산소 효과',an.length?(an.reduce(function(a,x){return a+x.an},0)/an.length).toFixed(1):'-','','');
@@ -195,18 +218,34 @@ function render(){
     {label:'깸',data:w14.map(function(w){return H(w.aw)}),backgroundColor:'#64748b'}]},
     options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
   $('sn').textContent=w14.length?'':'수면 데이터가 아직 없어요.';
+  var q=$('sq');q.textContent='';
+  if(w14.length){
+    var L=w14[w14.length-1],av=function(k){var v=w14.map(function(w){return w[k]}).filter(function(x){return x!=null});return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null};
+    var pc=function(a,b){return a!=null&&b?Math.round(a/b*100):null};
+    var lb2=function(v,lo,hi){return v==null?'-':v+'% ('+(v<lo?'낮음':v>hi?'높음':'적정')+')'};
+    var l1=el('div','',md(L.d)+' 수면 '+(L.sc!=null?L.sc+'점 · '+gr(L.sc):'점수 없음'));l1.style.fontWeight='700';
+    if(L.sc!=null)l1.style.color=L.sc>=80?cv('--ok'):L.sc>=60?cv('--wn'):cv('--hot');
+    q.appendChild(l1);
+    var dm=Math.round((L.sl-7*3600)/60);
+    q.appendChild(el('div','','수면 시간 '+hm(L.sl)+' · '+(dm>=0?'권장 7시간 충족':'권장(7~9시간)보다 '+(-dm)+'분 부족')));
+    q.appendChild(el('div','','깊은 수면 '+lb2(pc(L.dp,L.sl),13,23)+' · REM '+lb2(pc(L.rm,L.sl),20,25)+' · 깸 '+(L.aw!=null?Math.round(L.aw/(L.sl+L.aw)*100)+'%':'-')));
+    var as=av('sc'),ah=av('sl');
+    q.appendChild(el('div','','14일 평균 '+(as!=null?Math.round(as)+'점 ('+gr(as)+')':'점수 없음')+' · 평균 수면 '+(ah!=null?hm(ah):'-')));
+    q.appendChild(el('div','','※ 등급은 가민 점수 구간, 단계 비율은 일반적인 참고 범위예요.'));
+  }
 
   // 표
   var tb=$('tb');tb.textContent='';
   sel.slice(-8).reverse().forEach(function(a){var tr=el('tr');
     [[a.d.getFullYear()+'-'+String(a.d.getMonth()+1).padStart(2,'0')+'-'+String(a.d.getDate()).padStart(2,'0'),''],[a.name,''],
-     [Math.round(a.min)+'분','n'],[a.hr||'-','n'],[a.mx||'-','n'],[a.an!=null?a.an:'-','n'],[a.tl||'-','n'],[a.kc||'-','n']].forEach(function(c){tr.appendChild(el('td',c[1],String(c[0])))});
+     [Math.round(a.min)+'분','n'],[a.hr||'-','n'],[a.mx||'-','n'],[a.an!=null?a.an.toFixed(1):'-','n'],[a.tl||'-','n'],[a.kc||'-','n']].forEach(function(c){tr.appendChild(el('td',c[1],String(c[0])))});
     tb.appendChild(tr)});
 }
 
 $('save').onclick=function(){var u=$('u').value.trim(),k=$('k').value.trim();if(!u||!k){$('err').textContent='주소와 키를 모두 입력해 주세요.';return}
   st('s','garminUrl',u);st('s','garminKey',k);$('err').textContent='';load()};
 $('rf').onclick=load;
+$('per').onchange=function(){per=this.value;render()};
 $('rs').onclick=function(){st('d','garminUrl');st('d','garminKey');$('k').value='';show('setup')};
 $('seg').onclick=function(e){var g=e.target.getAttribute&&e.target.getAttribute('data-g');if(!g||!D)return;grp=g;
   Array.prototype.forEach.call($('seg').children,function(b){b.classList.toggle('on',b===e.target)});render()};
