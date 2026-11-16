@@ -25,6 +25,7 @@ API_KEY = os.environ["API_KEY"]
 DAYS = int(os.environ.get("DAYS") or "7")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.8-flash"
+sys.stdout.reconfigure(line_buffering=True)  # 로그가 실시간으로 찍히게
 WELLNESS_DAYS = min(DAYS, 30)  # 건강 데이터는 날짜마다 여러 번 호출하므로 최대 30일
 
 
@@ -169,11 +170,26 @@ def coach(act_rows, well_rows):
         "\n\n[직전 7일 운동]\n" + ("\n".join(line(r) for r in recent) or "기록 없음") +
         "\n\n[최근 건강 데이터]\n" + (wl or "기록 없음"))
 
-    resp = requests.post(
-        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
-        headers={"x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json"},
-        json={"contents": [{"parts": [{"text": prompt}]}]},
-        timeout=120)
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    headers = {"x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json"}
+    body = {"contents": [{"parts": [{"text": prompt}]}],
+            # 생각(thinking)을 짧게 해서 응답을 빨리 받음 (8줄 리뷰엔 충분)
+            "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}}}
+    resp = None
+    for attempt in (1, 2):  # 시간 초과면 한 번 더 시도
+        t0 = time.time()
+        try:
+            resp = requests.post(url, headers=headers, json=body, timeout=(10, 300))
+        except requests.exceptions.Timeout:
+            print(f"[coaching] Gemini 응답 시간 초과 ({attempt}회차, {round(time.time()-t0)}초)")
+            continue
+        print(f"[coaching] Gemini 응답 {resp.status_code} ({round(time.time()-t0)}초)")
+        if resp.status_code == 400 and "generationConfig" in body:  # 설정을 지원하지 않는 모델이면 빼고 재시도
+            body.pop("generationConfig")
+            continue
+        break
+    if resp is None:
+        return
     if resp.status_code != 200:
         print("[coaching] API 오류:", resp.status_code, resp.text[:150])
         return
@@ -220,7 +236,7 @@ def main():
     try:
         coach(act_rows, well_rows)
     except Exception as e:
-        print("[coaching] 건너뜀:", type(e).__name__)
+        print("[coaching] 건너뜀:", type(e).__name__, str(e)[:150])
 
     if not (ok_a and ok_w):
         sys.exit(1)
