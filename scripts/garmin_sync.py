@@ -23,6 +23,8 @@ PASSWORD = os.environ["GARMIN_PASSWORD"]
 WEBAPP_URL = os.environ["WEBAPP_URL"]
 API_KEY = os.environ["API_KEY"]
 DAYS = int(os.environ.get("DAYS") or "7")
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.8-flash"
 WELLNESS_DAYS = min(DAYS, 30)  # 건강 데이터는 날짜마다 여러 번 호출하므로 최대 30일
 
 
@@ -122,6 +124,70 @@ def post(sheet, rows):
         return False
 
 
+def coach(act_rows, well_rows):
+    """가장 최근 운동일을 Gemini로 리뷰해서 coaching 시트에 저장 (키가 없으면 건너뜀)."""
+    if not GEMINI_KEY:
+        print("[coaching] GEMINI_API_KEY 없음 - 건너뜀")
+        return
+    if not act_rows:
+        return
+    latest = max(str(r["startTime"])[:10] for r in act_rows)
+    if (dt.date.today() - dt.date.fromisoformat(latest)).days > 1:
+        print("[coaching] 최근 1일 내 운동 없음 - 건너뜀")
+        return
+    todays = [r for r in act_rows if str(r["startTime"])[:10] == latest]
+    ids = ",".join(sorted(str(r["activityId"]) for r in todays))
+
+    try:  # 같은 운동에 이미 코칭이 있으면 다시 만들지 않음 (API 비용 절약)
+        got = requests.get(WEBAPP_URL, params={"key": API_KEY}, timeout=60).json()
+        for c in got.get("coaching") or []:
+            if str(c.get("date"))[:10] == latest and str(c.get("activityIds")) == ids:
+                print("[coaching] 이미 생성됨 - 건너뜀")
+                return
+    except Exception:
+        pass
+
+    def line(r):
+        return (f"{str(r['startTime'])[:10]} {r['name']}({r['type']}) {round((r['durationSec'] or 0)/60)}분, "
+                f"평균심박 {r['avgHR'] or '-'}, 최대 {r['maxHR'] or '-'}, 유산소TE {r['aerobicTE'] or '-'}, "
+                f"무산소TE {r['anaerobicTE'] or '-'}, 부하 {r['trainingLoad'] or '-'}, "
+                f"존(초) {r['z1Sec']}/{r['z2Sec']}/{r['z3Sec']}/{r['z4Sec']}/{r['z5Sec']}, {r['calories']}kcal")
+
+    cutoff = (dt.date.fromisoformat(latest) - dt.timedelta(days=7)).isoformat()
+    recent = [r for r in act_rows if cutoff <= str(r["startTime"])[:10] < latest]
+    well = sorted(well_rows, key=lambda w: w["date"])[-4:]
+    wl = "\n".join(
+        f"{w['date']} 수면 {round((w['sleepSec'] or 0)/3600, 1) if w['sleepSec'] != '' else '-'}시간 점수 {w['sleepScore'] or '-'}, "
+        f"HRV {w['hrvLastNight'] or '-'}({w['hrvStatus'] or '-'}), 안정시심박 {w['restingHR'] or '-'}, "
+        f"바디배터리 {w['bodyBatteryHigh'] or '-'}/{w['bodyBatteryLow'] or '-'}, 훈련준비도 {w['trainingReadiness'] or '-'}"
+        for w in well)
+    prompt = (
+        "너는 고강도 인터벌 트레이닝(HIIT, 하이록스 포함)을 주로 하는 아마추어 운동선수의 코치야.\n"
+        "아래 데이터를 보고 한국어로 간결하게 리뷰해줘. 형식: (1) 오늘 운동 한 줄 평가 (2) 잘한 점 (3) 주의할 점 "
+        "(4) 회복 데이터 기반 내일 훈련 제안. 전체 8줄 이내, 의학적 진단은 하지 말고 데이터에 없는 건 추측하지 마.\n\n"
+        f"[오늘({latest}) 운동]\n" + "\n".join(line(r) for r in todays) +
+        "\n\n[직전 7일 운동]\n" + ("\n".join(line(r) for r in recent) or "기록 없음") +
+        "\n\n[최근 건강 데이터]\n" + (wl or "기록 없음"))
+
+    resp = requests.post(
+        f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent",
+        headers={"x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json"},
+        json={"contents": [{"parts": [{"text": prompt}]}]},
+        timeout=120)
+    if resp.status_code != 200:
+        print("[coaching] API 오류:", resp.status_code, resp.text[:150])
+        return
+    try:
+        parts = resp.json()["candidates"][0]["content"]["parts"]
+        text = "".join(p.get("text", "") for p in parts).strip()
+    except (KeyError, IndexError, ValueError):
+        print("[coaching] 응답을 읽지 못함")
+        return
+    if text:
+        post("coaching", [{"date": latest, "activityIds": ids, "text": text}])
+        print("[coaching] 저장 완료")
+
+
 def main():
     client = Garmin(EMAIL, PASSWORD)
     client.login()
@@ -150,6 +216,11 @@ def main():
         time.sleep(0.3)  # 호출 간격을 둬서 차단 위험을 줄임
     print(f"가져온 건강 데이터: {len(well_rows)}일")
     ok_w = post("wellness", well_rows)
+
+    try:
+        coach(act_rows, well_rows)
+    except Exception as e:
+        print("[coaching] 건너뜀:", type(e).__name__)
 
     if not (ok_a and ok_w):
         sys.exit(1)
