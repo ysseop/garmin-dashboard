@@ -62,6 +62,8 @@ select option{background:var(--bg2);color:var(--tx)}
     <div class="seg"><button id="rf">새로고침</button><button id="rs">설정 초기화</button></div></div>
 
   <div id="hint" class="hint nu"></div>
+  <div class="card hide" id="coachBox" style="margin-bottom:12px"><h2>AI 코칭 <span id="coachDate"></span></h2><div id="coachText" style="white-space:pre-wrap;font-size:14px;line-height:1.65"></div></div>
+  <div style="margin-bottom:6px"><button id="cp">코칭 프롬프트 복사</button> <span class="sub" id="cpn"></span></div>
 
   <div class="sec">오늘의 컨디션 <span id="cd"></span></div>
   <div class="grid" id="cond"></div>
@@ -115,7 +117,7 @@ function buildPer(acts,now){
   s.value=per;
 }
 function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
-function gOf(t){return t==='hiit'?'hiit':(RUN.indexOf(t)>=0?'run':'etc')}
+function gOf(t){return(t==='hiit'||t==='indoor_cardio')?'hiit':(RUN.indexOf(t)>=0?'run':'etc')}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 function stat(box,k,v,u,s,dl){var c=el('div','card');c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));if(dl)x.appendChild(el('span','dl '+dl[0],dl[1]));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));box.appendChild(c)}
 function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
@@ -234,6 +236,14 @@ function render(){
     q.appendChild(el('div','','※ 등급은 가민 점수 구간, 단계 비율은 일반적인 참고 범위예요.'));
   }
 
+  // AI 코칭
+  var cs=(D.coaching||[]).filter(function(x){return x&&x.text}).sort(function(a,b){return String(a.date)<String(b.date)?-1:1}),cl=cs[cs.length-1];
+  $('coachBox').classList.toggle('hide',!cl);
+  if(cl){$('coachDate').textContent='· '+String(cl.date).slice(0,10);$('coachText').textContent=cl.text}
+  var lastDay=acts.length?acts[acts.length-1].d.toDateString():'',tdA=acts.filter(function(a){return a.d.toDateString()===lastDay});
+  window.__prompt=acts.length?('고강도 인터벌 트레이닝을 하는 사람의 코치로서 오늘 운동을 한국어로 8줄 이내로 리뷰하고 내일 훈련을 제안해줘.\n[최근 운동]\n'+
+    tdA.map(function(a){return md(a.d)+' '+a.name+' '+Math.round(a.min)+'분 평균심박 '+(a.hr||'-')+' 최대 '+(a.mx||'-')+' 무산소TE '+(a.an!=null?a.an:'-')+' 부하 '+(a.tl||'-')}).join('\n')+
+    (tw?'\n[컨디션] 수면 '+(tw.sl?hm(tw.sl):'-')+' 점수 '+(tw.sc!=null?tw.sc:'-')+', HRV '+(tw.hv!=null?tw.hv:'-')+', 안정시심박 '+(tw.rh!=null?tw.rh:'-')+', 훈련준비도 '+(tw.rd!=null?tw.rd:'-'):'')):'';
   // 표
   var tb=$('tb');tb.textContent='';
   sel.slice(-8).reverse().forEach(function(a){var tr=el('tr');
@@ -245,6 +255,7 @@ function render(){
 $('save').onclick=function(){var u=$('u').value.trim(),k=$('k').value.trim();if(!u||!k){$('err').textContent='주소와 키를 모두 입력해 주세요.';return}
   st('s','garminUrl',u);st('s','garminKey',k);$('err').textContent='';load()};
 $('rf').onclick=load;
+$('cp').onclick=function(){var t=window.__prompt||'';if(!t){$('cpn').textContent='운동 데이터가 없어요';return}try{navigator.clipboard.writeText(t).then(function(){$('cpn').textContent='복사됨 - Claude 채팅에 붙여넣으세요'},function(){$('cpn').textContent='복사 실패'})}catch(e){$('cpn').textContent='복사 실패'}};
 $('per').onchange=function(){per=this.value;render()};
 $('rs').onclick=function(){st('d','garminUrl');st('d','garminKey');$('k').value='';show('setup')};
 $('seg').onclick=function(e){var g=e.target.getAttribute&&e.target.getAttribute('data-g');if(!g||!D)return;grp=g;
