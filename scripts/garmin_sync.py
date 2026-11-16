@@ -25,6 +25,7 @@ API_KEY = os.environ["API_KEY"]
 DAYS = int(os.environ.get("DAYS") or "7")
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.8-flash"
+FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite"]  # 혼잡할 때 대신 쓸 모델
 sys.stdout.reconfigure(line_buffering=True)  # 로그가 실시간으로 찍히게
 WELLNESS_DAYS = min(DAYS, 30)  # 건강 데이터는 날짜마다 여러 번 호출하므로 최대 30일
 
@@ -170,25 +171,34 @@ def coach(act_rows, well_rows):
         "\n\n[직전 7일 운동]\n" + ("\n".join(line(r) for r in recent) or "기록 없음") +
         "\n\n[최근 건강 데이터]\n" + (wl or "기록 없음"))
 
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:generateContent"
+    # 첫 모델이 혼잡(503/429)하거나 느리면 다음 모델로 넘어감
+    models = [GEMINI_MODEL] + [m for m in FALLBACK_MODELS if m != GEMINI_MODEL]
     headers = {"x-goog-api-key": GEMINI_KEY, "Content-Type": "application/json"}
-    body = {"contents": [{"parts": [{"text": prompt}]}],
-            # 생각(thinking)을 짧게 해서 응답을 빨리 받음 (8줄 리뷰엔 충분)
-            "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}}}
     resp = None
-    for attempt in (1, 2):  # 시간 초과면 한 번 더 시도
-        t0 = time.time()
-        try:
-            resp = requests.post(url, headers=headers, json=body, timeout=(10, 300))
-        except requests.exceptions.Timeout:
-            print(f"[coaching] Gemini 응답 시간 초과 ({attempt}회차, {round(time.time()-t0)}초)")
-            continue
-        print(f"[coaching] Gemini 응답 {resp.status_code} ({round(time.time()-t0)}초)")
-        if resp.status_code == 400 and "generationConfig" in body:  # 설정을 지원하지 않는 모델이면 빼고 재시도
-            body.pop("generationConfig")
-            continue
-        break
+    for model in models:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
+        body = {"contents": [{"parts": [{"text": prompt}]}],
+                # 생각(thinking)을 짧게 해서 응답을 빨리 받음 (8줄 리뷰엔 충분)
+                "generationConfig": {"thinkingConfig": {"thinkingLevel": "low"}}}
+        for _ in range(2):
+            t0 = time.time()
+            try:
+                resp = requests.post(url, headers=headers, json=body, timeout=(10, 90))
+            except requests.exceptions.Timeout:
+                print(f"[coaching] {model} 응답 시간 초과 ({round(time.time()-t0)}초)")
+                resp = None
+                break
+            print(f"[coaching] {model} 응답 {resp.status_code} ({round(time.time()-t0)}초)")
+            if resp.status_code == 400 and "generationConfig" in body:  # 설정 미지원 모델이면 빼고 재시도
+                body.pop("generationConfig")
+                continue
+            break
+        if resp is not None and resp.status_code == 200:
+            break
+        if resp is not None and resp.status_code not in (429, 500, 503, 404):
+            break  # 키 오류 등은 다른 모델로 바꿔도 안 되므로 중단
     if resp is None:
+        print("[coaching] 모든 모델 응답 없음 - 다음 동기화 때 다시 시도")
         return
     if resp.status_code != 200:
         print("[coaching] API 오류:", resp.status_code, resp.text[:150])
