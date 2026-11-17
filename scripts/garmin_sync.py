@@ -28,6 +28,12 @@ GEMINI_MODEL = os.environ.get("GEMINI_MODEL") or "gemini-3.8-flash"
 FALLBACK_MODELS = ["gemini-3.5-flash", "gemini-3.5-flash-lite"]  # 혼잡할 때 대신 쓸 모델
 sys.stdout.reconfigure(line_buffering=True)  # 로그가 실시간으로 찍히게
 WELLNESS_DAYS = min(DAYS, 30)  # 건강 데이터는 날짜마다 여러 번 호출하므로 최대 30일
+KST = dt.timezone(dt.timedelta(hours=9))
+
+
+def today_kst():
+    """GitHub 서버는 UTC 시계라서, 한국 날짜로 '오늘'을 계산 (07:30 KST = 전날 22:30 UTC)."""
+    return dt.datetime.now(KST).date()
 
 
 def safe(fn, *args):
@@ -134,7 +140,7 @@ def coach(act_rows, well_rows):
     if not act_rows:
         return
     latest = max(str(r["startTime"])[:10] for r in act_rows)
-    if (dt.date.today() - dt.date.fromisoformat(latest)).days > 1:
+    if (today_kst() - dt.date.fromisoformat(latest)).days > 1:
         print("[coaching] 최근 1일 내 운동 없음 - 건너뜀")
         return
     todays = [r for r in act_rows if str(r["startTime"])[:10] == latest]
@@ -219,7 +225,7 @@ def main():
     client.login()
     print("가민 로그인 성공")
 
-    end = dt.date.today()
+    end = today_kst()
     start = end - dt.timedelta(days=DAYS)
 
     # 1) 운동 기록
