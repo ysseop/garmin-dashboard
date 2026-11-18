@@ -2,7 +2,10 @@ name: Garmin Sync
 
 on:
   schedule:
-    - cron: "30 22 * * *" # KST 07:30
+    # 아침 운동(보통 06:30) 직후 빨리 반영되도록 KST 06:05~09:45 사이 20분마다
+    # (GitHub 예약 실행은 몇 분~1시간 정도 앞뒤로 밀릴 수 있음)
+    - cron: "5,25,45 21-23 * * *" # KST 06:05 ~ 08:45
+    - cron: "5,25,45 0 * * *"     # KST 09:05 ~ 09:45
     - cron: "30 3 * * *"  # KST 12:30
     - cron: "30 12 * * *" # KST 21:30
   workflow_dispatch:
@@ -10,6 +13,11 @@ on:
       days:
         description: "days to fetch (first run: 90)"
         default: "7"
+
+# 실행이 겹치면 앞의 실행이 끝난 뒤에 다음 실행
+concurrency:
+  group: garmin-sync
+  cancel-in-progress: false
 
 jobs:
   sync:
