@@ -6,17 +6,17 @@
 <title>Training Dashboard</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-:root{--bg:#0b0e17;--bg2:#141a2b;--card:rgba(255,255,255,.05);--bd:rgba(255,255,255,.09);--tx:#eef1f8;--mu:#8e98b3;--a1:#8b5cf6;--a2:#22d3ee;--hot:#fb7185;--ok:#34d399;--wn:#fbbf24}
-@media(prefers-color-scheme:light){:root{--bg:#f3f5fb;--bg2:#e6eaf7;--card:#fff;--bd:#e3e7f2;--tx:#161a29;--mu:#667090}}
+:root{--bg:#0b0e17;--bg2:#141a2b;--card:rgba(255,255,255,.05);--bd:rgba(255,255,255,.09);--tx:#eef1f8;--mu:#8e98b3;--a1:#8b5cf6;--a2:#22d3ee;--hot:#fb7185;--ok:#34d399;--wn:#fbbf24;--trk:rgba(255,255,255,.08)}
+@media(prefers-color-scheme:light){:root{--bg:#f3f5fb;--bg2:#e6eaf7;--card:#fff;--bd:#e3e7f2;--tx:#161a29;--mu:#667090;--ok:#059669;--wn:#d97706;--hot:#e11d48;--trk:#eef1f7}}
 *{box-sizing:border-box}
-body{margin:0;color:var(--tx);font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:radial-gradient(900px 500px at 10% -10%,#3b2a7a55,transparent),radial-gradient(800px 500px at 100% 0,#0e7490444,transparent),linear-gradient(var(--bg),var(--bg2)) fixed}
+body{margin:0;color:var(--tx);font-family:-apple-system,"Segoe UI","Malgun Gothic","Apple SD Gothic Neo",sans-serif;background:radial-gradient(900px 500px at 10% -10%,#3b2a7a55,transparent),radial-gradient(800px 500px at 100% 0,#0e749044,transparent),linear-gradient(var(--bg),var(--bg2)) fixed}
 .w{max-width:1000px;margin:0 auto;padding:18px 14px 40px}
 .hd{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:14px}
 h1{font-size:22px;margin:0;background:linear-gradient(90deg,var(--a1),var(--a2));-webkit-background-clip:text;background-clip:text;color:transparent}
 h2{font-size:14px;margin:0 0 10px;color:var(--mu);font-weight:600;letter-spacing:.3px}
-.sec{font-size:12px;color:var(--mu);margin:18px 2px 8px;letter-spacing:1.5px}
+.sec{font-size:12px;color:var(--mu);margin:20px 2px 8px;letter-spacing:1.5px}
 button{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px;cursor:pointer}
-button.on,button.pri{background:linear-gradient(90deg,var(--a1),var(--a2));border-color:transparent;color:#fff}
+button.pri{background:linear-gradient(90deg,var(--a1),var(--a2));border-color:transparent;color:#fff}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:18px;padding:16px;backdrop-filter:blur(8px)}
 .grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
 .g2{display:grid;gap:12px;grid-template-columns:1fr 1fr;margin-top:12px}
@@ -24,25 +24,35 @@ button.on,button.pri{background:linear-gradient(90deg,var(--a1),var(--a2));borde
 .k{font-size:12px;color:var(--mu)}
 .v{font-size:28px;font-weight:800;margin-top:4px;line-height:1.1}
 .v small{font-size:13px;font-weight:500;color:var(--mu);margin-left:3px}
-.sub{font-size:12px;color:var(--mu);margin-top:6px}
-.hint{border-radius:18px;padding:14px 16px;margin-bottom:12px;font-size:14px;line-height:1.55;border:1px solid var(--bd)}
-.hint.ok{background:#34d3991f;color:var(--ok)}.hint.wn{background:#fbbf241f;color:var(--wn)}.hint.bad{background:#fb71851f;color:var(--hot)}.hint.nu{background:var(--card);color:var(--mu)}
+.sub{font-size:12px;color:var(--mu);margin-top:6px;line-height:1.5}
+.tip{font-size:12px;margin-top:6px;line-height:1.5}
+.card.ok{border-left:4px solid var(--ok)}.card.wn{border-left:4px solid var(--wn)}.card.bad{border-left:4px solid var(--hot)}.card.nu{border-left:4px solid var(--bd)}
+.ok .tip{color:var(--ok)}.wn .tip{color:var(--wn)}.bad .tip{color:var(--hot)}.nu .tip{color:var(--mu)}
+.todo{margin:0;padding:0;list-style:none}
+.todo li{padding:8px 0 8px 22px;border-bottom:1px solid var(--bd);font-size:14px;line-height:1.55;position:relative}
+.todo li:last-child{border-bottom:0}
+.todo li:before{content:"";position:absolute;left:4px;top:15px;width:9px;height:9px;border-radius:50%;background:var(--mu)}
+.todo li.ok:before{background:var(--ok)}.todo li.wn:before{background:var(--wn)}.todo li.bad:before{background:var(--hot)}
 .cb{position:relative;height:250px}
-.seg{display:flex;gap:6px}
+.bar{margin:12px 0 4px}
+.bar .lb{display:flex;justify-content:space-between;font-size:13px;margin-bottom:5px}
+.bar .tr{position:relative;height:12px;border-radius:999px;background:var(--trk);overflow:hidden}
+.bar .tg{position:absolute;top:0;bottom:0;background:rgba(52,211,153,.28);border-left:2px solid var(--ok);border-right:2px solid var(--ok)}
+.bar .fl{position:absolute;top:3px;bottom:3px;left:0;border-radius:999px}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:9px 6px;border-bottom:1px solid var(--bd);text-align:left;white-space:nowrap}
 th{color:var(--mu);font-weight:600}.n{text-align:right}
 .tw{overflow-x:auto}
+.bd{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;font-weight:700}
+.bd.hard{background:#fb718526;color:var(--hot)}.bd.easy{background:#34d39926;color:var(--ok)}.bd.mid{background:#fbbf2426;color:var(--wn)}
 .setup{max-width:440px;margin:50px auto}
 .setup label{display:block;font-size:13px;color:var(--mu);margin:14px 0 5px}
 .setup input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--bd);background:transparent;color:var(--tx);font-size:14px}
 .err{color:var(--hot);font-size:13px;min-height:18px;margin-top:10px}
 .hide{display:none}.ctr{text-align:center;color:var(--mu);padding:80px 0}
-button.on,button.pri{background-origin:border-box}
 .dl{font-size:14px;font-weight:700;margin-left:8px}.dl.up{color:#ef4444}.dl.dn{color:#3b82f6}.dl.eq{color:var(--mu)}
-select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:6px 12px;font-size:13px;letter-spacing:normal}
+select{background:var(--card);color:var(--tx);border:1px solid var(--bd);border-radius:999px;padding:6px 12px;font-size:13px}
 select option{background:var(--bg2);color:var(--tx)}
-.seg{flex-wrap:wrap;align-items:center}
 </style>
 </head>
 <body>
@@ -59,49 +69,245 @@ select option{background:var(--bg2);color:var(--tx)}
 
 <div id="dash" class="hide">
   <div class="hd"><h1>Training Dashboard</h1>
-    <div class="seg"><button id="rf">새로고침</button><button id="rs">설정 초기화</button></div></div>
+    <div><button id="rf">새로고침</button> <button id="rs">설정 초기화</button></div></div>
 
-  <div id="hint" class="hint nu"></div>
   <div class="card hide" id="coachBox" style="margin-bottom:12px"><h2>AI 코칭 <span id="coachDate"></span></h2><div id="coachText" style="white-space:pre-wrap;font-size:14px;line-height:1.65"></div></div>
-  <div style="margin-bottom:6px"><button id="cp">코칭 프롬프트 복사</button> <span class="sub" id="cpn"></span></div>
+
+  <div class="card"><h2>이번 주 해야 할 것</h2><ul class="todo" id="todo"></ul></div>
 
   <div class="sec">오늘의 컨디션 <span id="cd"></span></div>
   <div class="grid" id="cond"></div>
 
-  <div class="sec" style="display:flex;justify-content:space-between;align-items:center">
-    <span>운동 요약 <span id="pt"></span></span>
-    <span class="seg"><select id="per"></select><span class="seg" id="seg"><button data-g="hiit" class="on">HIIT</button><button data-g="run">러닝</button><button data-g="all">전체</button></span></span></div>
-  <div class="grid" id="sum"></div>
+  <div class="sec">성장 지표 · 최근 7일</div>
+  <div class="grid" id="grow" style="grid-template-columns:repeat(auto-fit,minmax(140px,1fr))"></div>
 
   <div class="g2">
-    <div class="card"><h2>주간 운동 시간 (분, 12주)</h2><div class="cb"><canvas id="c1"></canvas></div></div>
-    <div class="card"><h2>세션별 심박과 무산소 효과</h2><div class="cb"><canvas id="c2"></canvas></div></div>
+    <div class="card"><h2>4주 훈련 부하 균형 (가민)</h2><div id="bal"></div><div class="sub" id="baln"></div></div>
+    <div class="card"><h2>부하 비율 추이 (급성÷만성, 30일)</h2><div class="cb"><canvas id="c6"></canvas></div><div class="sub" id="an"></div></div>
   </div>
   <div class="g2">
-    <div class="card"><h2>심박 존 분포 <span id="zt"></span></h2><div class="cb"><canvas id="c3"></canvas></div><div class="sub" id="zn"></div></div>
-    <div class="card"><h2>HRV 추이 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
+    <div class="card"><h2>주간 강도 분포 (분, 12주)</h2><div class="cb"><canvas id="c1"></canvas></div><div class="sub">목표: 고강도(존4~5) 주 20~60분, 저강도(존1~2)가 가장 많게</div></div>
+    <div class="card"><h2>세션별 운동 효과 (최근 15회)</h2><div class="cb"><canvas id="c2"></canvas></div><div class="sub">무산소 효과 3.0 이상 = 강한 날, 2.0 미만 = 쉬운 날</div></div>
   </div>
-  <div class="card" style="margin-top:12px"><h2>수면 (최근 14일, 시간)</h2><div id="sq" class="sub" style="margin:0 0 10px;line-height:1.7"></div><div class="cb"><canvas id="c5"></canvas></div><div class="sub" id="sn"></div></div>
+  <div class="g2">
+    <div class="card"><h2>HRV와 안정시 심박 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
+    <div class="card"><h2>수면 (최근 14일, 시간)</h2><div class="cb"><canvas id="c5"></canvas></div><div class="sub" id="sn"></div></div>
+  </div>
+
+  <div class="sec" style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+    <span>운동 요약 <span id="pt"></span></span><select id="per"></select></div>
+  <div class="grid" id="sum"></div>
 
   <div class="sec">최근 세션</div>
   <div class="card"><div class="tw"><table>
-    <thead><tr><th>날짜</th><th>이름</th><th class="n">시간</th><th class="n">평균 심박</th><th class="n">최대</th><th class="n">무산소 TE</th><th class="n">부하</th><th class="n">kcal</th></tr></thead>
+    <thead><tr><th>날짜</th><th>이름</th><th>등급</th><th class="n">시간</th><th class="n">평균/최대 심박</th><th class="n">유산소 TE</th><th class="n">무산소 TE</th><th class="n">존4~5</th><th class="n">부하</th></tr></thead>
     <tbody id="tb"></tbody></table></div></div>
 </div>
 </div>
 
 <script>
-var RUN=['running','trail_running','treadmill_running','track_running'],DAY=864e5,ch={},grp='hiit',per='r28',D=null;
+var DAY=864e5,ch={},per='r28',D=null;
 var $=function(i){return document.getElementById(i)};
 function st(op,k,v){try{if(op==='g')return localStorage.getItem(k);if(op==='s')localStorage.setItem(k,v);if(op==='d')localStorage.removeItem(k)}catch(e){}return null}
 function show(w){['setup','load','dash'].forEach(function(i){$(i).classList.toggle('hide',i!==w)})}
 function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 function num(v){return(v===''||v==null||isNaN(Number(v)))?null:Number(v)}
 function md(d){return(d.getMonth()+1)+'/'+d.getDate()}
+function ymd(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
 function pd(s){s=String(s);var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):new Date(s.replace(' ','T'))}
 function hm(sec){return sec==null?'-':Math.floor(sec/3600)+'시간 '+Math.round(sec%3600/60)+'분'}
 function gr(s){return s==null?'':s>=90?'우수':s>=80?'좋음':s>=60?'보통':'나쁨'}
 function r1(v){return v==null?null:Math.round(v*10)/10}
+function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
+function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
+function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
+// 세션 등급: 무산소 효과 기준
+function grade(a){return a.an==null?null:a.an>=3?'hard':a.an<2?'easy':'mid'}
+var GN={hard:'강한 날',easy:'쉬운 날',mid:'애매한 날'};
+// 성장 지표 카드 (상태색 + 한 줄 조언)
+function gcard(box,lvl,k,v,u,s,tip,dl){var c=el('div','card '+lvl);c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));if(dl)x.appendChild(el('span','dl '+dl[0],dl[1]));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));if(tip)c.appendChild(el('div','tip',tip));box.appendChild(c)}
+function stat(box,k,v,u,s,dl){gcard(box,'',k,v,u,s,'',dl)}
+var TS={PRODUCTIVE:'생산적',MAINTAINING:'유지',RECOVERY:'회복',PEAKING:'최고조',UNPRODUCTIVE:'비생산적',STRAINED:'과부하',OVERREACHING:'무리',DETRAINING:'체력 저하',NO_STATUS:'상태 없음'};
+function tsName(p){p=String(p||'');for(var k in TS){if(p.indexOf(k)===0)return TS[k]}return p}
+function balName(p){p=String(p||'');if(!p)return'';
+  var m={AEROBIC_LOW_SHORTAGE:'저강도 유산소가 부족해요',AEROBIC_HIGH_SHORTAGE:'고강도 유산소가 부족해요',ANAEROBIC_SHORTAGE:'무산소가 부족해요',BALANCED:'균형이 잘 잡혀 있어요'};
+  for(var k in m){if(p.indexOf(k)===0)return m[k]}
+  if(p.indexOf('LOW')>=0&&p.indexOf('FOCUS')>=0)return'저강도 유산소 위주예요';
+  if(p.indexOf('HIGH')>=0&&p.indexOf('FOCUS')>=0)return'고강도 유산소 위주예요';
+  if(p.indexOf('ANAEROBIC')>=0&&p.indexOf('FOCUS')>=0)return'무산소 위주예요';
+  return p}
+
+async function load(){
+  var u=st('g','garminUrl'),k=st('g','garminKey');
+  if(!u||!k){show('setup');return}
+  show('load');
+  try{
+    var r=await fetch(u+'?key='+encodeURIComponent(k)),d=await r.json();
+    if(!d.ok)throw new Error(d.error==='unauthorized'?'키가 맞지 않아요.':'데이터를 불러오지 못했어요.');
+    D=d;render();show('dash');
+  }catch(e){$('err').textContent=e.message||'불러오지 못했어요. 주소와 키를 확인해 주세요.';show('setup')}
+}
+
+function render(){
+  var now=new Date(),t7=new Date(now-7*DAY);
+  var acts=(D.rows||[]).map(function(r){var z=[1,2,3,4,5].map(function(i){return num(r['z'+i+'Sec'])||0});
+    return{d:pd(r.startTime),type:r.type,name:r.name||r.type,min:(num(r.durationSec)||0)/60,hr:num(r.avgHR),mx:num(r.maxHR),
+    ae:r1(num(r.aerobicTE)),an:r1(num(r.anaerobicTE)),tl:num(r.trainingLoad),z:z,lo:(z[0]+z[1])/60,mi:z[2]/60,hi:(z[3]+z[4])/60}})
+    .filter(function(a){return!isNaN(a.d.getTime())}).sort(function(a,b){return a.d-b.d});
+  acts.forEach(function(a){a.g=grade(a)});
+  var well=(D.wellness||[]).map(function(w){var o={d:new Date(String(w.date).slice(0,10)+'T00:00:00')};
+    ['sleepSec','deepSec','lightSec','remSec','awakeSec','sleepScore','hrvLastNight','hrvWeeklyAvg','restingHR','bodyBatteryHigh','bodyBatteryLow','avgStress','trainingReadiness',
+     'vo2max','acuteLoad','chronicLoad','acwr','loadAnaerobic','loadAnaerobicMin','loadAnaerobicMax','loadHighAerobic','loadHighAerobicMin','loadHighAerobicMax',
+     'loadLowAerobic','loadLowAerobicMin','loadLowAerobicMax'].forEach(function(k){o[k]=num(w[k])});
+    o.hs=w.hrvStatus||'';o.ts=w.trainingStatus||'';o.as=w.acwrStatus||'';o.lf=w.loadFeedback||'';return o})
+    .filter(function(w){return!isNaN(w.d.getTime())}).sort(function(a,b){return a.d-b.d});
+  var tw=well.filter(function(w){return w.sleepSec||w.hrvLastNight||w.trainingReadiness||w.restingHR}).pop();
+  var tl=well.filter(function(w){return w.acwr!=null||w.loadAnaerobic!=null}).pop();
+  var vw=well.filter(function(w){return w.vo2max!=null});
+
+  // ---- 최근 7일 계산 ----
+  var a7=acts.filter(function(a){return a.d>t7});
+  var hi7=Math.round(a7.reduce(function(s,a){return s+a.hi},0));
+  var hard7=a7.filter(function(a){return a.g==='hard'}).length;
+  var z2long=a7.filter(function(a){return a.g==='easy'&&a.lo>=35}).length;
+  var mid7=a7.filter(function(a){return a.g==='mid'}).length;
+  var hardDays={};acts.forEach(function(a){if(a.g==='hard')hardDays[ymd(a.d)]=1});
+  var streak=0,dd=new Date(now);if(!hardDays[ymd(dd)])dd.setDate(dd.getDate()-1);
+  while(hardDays[ymd(dd)]){streak++;dd.setDate(dd.getDate()-1)}
+  var sl7=well.filter(function(w){return w.d>t7&&w.sleepSec}),slAvg=sl7.length?sl7.reduce(function(s,w){return s+w.sleepSec},0)/sl7.length:null;
+
+  // ---- AI 코칭 ----
+  var cs=(D.coaching||[]).filter(function(x){return x&&x.text}).sort(function(a,b){return String(a.date)<String(b.date)?-1:1}),cl=cs[cs.length-1];
+  $('coachBox').classList.toggle('hide',!cl);
+  if(cl){$('coachDate').textContent='· '+String(cl.date).slice(0,10);$('coachText').textContent=String(cl.text).replace(/\*\*/g,'')}
+
+  // ---- 이번 주 해야 할 것 (규칙 기반) ----
+  var todo=[],T=function(l,t){todo.push([l,t])};
+  if(tw&&tw.trainingReadiness!=null&&tw.trainingReadiness<40)T('bad','훈련 준비도 '+tw.trainingReadiness+': 오늘은 쉬거나 존2(대화 가능한 강도) 30분 이하로.');
+  if(streak>=3)T('bad','강한 날이 '+streak+'일 연속이에요. 고강도는 2일 연속까지만, 다음 날은 쉬운 날로.');
+  if(tl&&tl.acwr!=null&&tl.acwr>1.5)T('bad','부하 비율 '+tl.acwr+' (1.5 초과): 이번 주 운동량을 줄여야 부상·과로를 막아요.');
+  if(tl&&tl.acwr!=null&&tl.acwr<0.8)T('wn','부하 비율 '+tl.acwr+' (0.8 미만): 체력이 떨어지는 구간이에요. 운동량을 조금 늘려도 돼요.');
+  if(tl&&tl.loadLowAerobic!=null&&tl.loadLowAerobicMin!=null&&tl.loadLowAerobic<tl.loadLowAerobicMin)T('wn','저강도 유산소 부족 (가민 4주 기준): 존2로 40분 이상 운동을 주 1~2회 넣으세요.');
+  if(tl&&tl.loadHighAerobic!=null&&tl.loadHighAerobicMin!=null&&tl.loadHighAerobic<tl.loadHighAerobicMin)T('wn','고강도 유산소 부족: 3~5분 길이 인터벌(존4)을 주 1회 넣으세요.');
+  if(tl&&tl.loadAnaerobic!=null&&tl.loadAnaerobicMin!=null&&tl.loadAnaerobic<tl.loadAnaerobicMin)T('wn','무산소 부족: 30초 이하 전력 인터벌을 주 1회 넣으세요.');
+  if(tl&&tl.loadAnaerobic!=null&&tl.loadAnaerobicMax!=null&&tl.loadAnaerobic>tl.loadAnaerobicMax)T('wn','무산소 부하가 목표보다 많아요: 전력 인터벌 횟수를 줄이고 그 자리를 존2로 바꾸세요.');
+  if(hard7>3)T('wn','최근 7일 강한 날 '+hard7+'회: 주 2~3회면 충분해요. 나머지는 쉬운 날로.');
+  if(hard7<2&&a7.length>=3)T('wn','최근 7일 강한 날 '+hard7+'회: 주 2회는 무산소 효과 3.0 이상까지 확실히 올리세요.');
+  if(mid7>=2)T('wn','애매한 날(무산소 효과 2.0~2.9) '+mid7+'회: 강하게 할 날은 더 세게, 쉬는 날은 확실히 쉽게 나누세요.');
+  if(z2long<1)T('wn','최근 7일 존2 40분 운동 0회: 심폐 기초 체력(VO2max)을 받쳐 주는 운동이에요. 주 1회 이상 넣으세요.');
+  if(hi7>80)T('wn','최근 7일 존4~5 '+hi7+'분 (목표 20~60분): 고강도 시간이 많아요.');
+  if(hi7<20&&hard7>=2)T('wn','강한 날 '+hard7+'회에 비해 존4~5는 '+hi7+'분뿐이에요. 인터벌 구간에서는 심박을 존4까지 확실히 올리세요.');
+  if(slAvg!=null&&slAvg<7*3600)T('wn','7일 평균 수면 '+hm(slAvg)+': 7시간 이상이 목표예요. 6:30 운동이면 23시 전 취침.');
+  if(!vw.length||(now-vw[vw.length-1].d)>21*DAY)T('nu','VO2max는 야외 러닝(GPS) 기록이 있어야 가민이 갱신해요. 2주에 한 번 20분 이상 야외 러닝을 해 보세요.');
+  if(!todo.length)T('ok','이번 주 균형이 좋아요. 지금 패턴을 유지하세요.');
+  var ul=$('todo');ul.textContent='';todo.forEach(function(t){ul.appendChild(el('li',t[0],t[1]))});
+
+  // ---- 오늘의 컨디션 ----
+  var c=$('cond');c.textContent='';$('cd').textContent='('+(now.getMonth()+1)+'월 '+now.getDate()+'일 '+'일월화수목금토'[now.getDay()]+'요일)';
+  if(tw){
+    var dm=tw.sleepSec?Math.round((tw.sleepSec-7*3600)/60):null;
+    gcard(c,tw.sleepSec==null?'nu':dm>=0?'ok':dm>-60?'wn':'bad','수면',tw.sleepSec?r1(tw.sleepSec/3600):'-','시간',
+      (tw.sleepScore!=null?'점수 '+tw.sleepScore+' · '+gr(tw.sleepScore):''),dm==null?'':dm>=0?'목표 7시간 충족':'목표보다 '+(-dm)+'분 부족');
+    gcard(c,tw.hs==='BALANCED'?'ok':tw.hs?'wn':'nu','HRV(지난밤)',tw.hrvLastNight!=null?tw.hrvLastNight:'-','ms',tw.hrvWeeklyAvg!=null?'주평균 '+tw.hrvWeeklyAvg+(tw.hs?' · '+tw.hs:''):tw.hs,'');
+    stat(c,'안정시 심박',tw.restingHR!=null?tw.restingHR:'-','bpm',tw.avgStress!=null?'스트레스 '+tw.avgStress:'');
+    var pv=well.filter(function(w){return w.trainingReadiness!=null&&w.d<tw.d}).pop(),dl=null;
+    if(tw.trainingReadiness!=null&&pv){var df=tw.trainingReadiness-pv.trainingReadiness;dl=df>0?['up','▲ '+df]:df<0?['dn','▼ '+(-df)]:['eq','– 0']}
+    var rd=tw.trainingReadiness;
+    gcard(c,rd==null?'nu':rd>=60?'ok':rd>=40?'wn':'bad','훈련 준비도',rd!=null?rd:'-','',md(tw.d)+' 기준'+(dl?' · 전일 대비':''),
+      rd==null?'':rd>=60?'계획한 강한 운동 OK':rd>=40?'중간 강도까지':'쉬거나 가볍게',dl);
+    stat(c,'바디배터리',tw.bodyBatteryHigh!=null?tw.bodyBatteryHigh:'-','',tw.bodyBatteryLow!=null?'최저 '+tw.bodyBatteryLow:'');
+  }else stat(c,'건강 데이터','없음','','wellness 시트에 데이터가 들어오면 표시돼요');
+
+  // ---- 성장 지표 ----
+  var g=$('grow');g.textContent='';
+  if(vw.length){var lv=vw[vw.length-1],old=vw.filter(function(w){return w.d<=new Date(lv.d-28*DAY)}).pop()||vw[0],dv=r1(lv.vo2max-old.vo2max);
+    gcard(g,dv>0?'ok':dv<0?'wn':'nu','VO2max',lv.vo2max,'',md(lv.d)+' 기준'+(old!==lv?' · 4주 전 대비 '+(dv>0?'+':'')+dv:''),'꾸준히 오르는 게 목표');}
+  else gcard(g,'nu','VO2max','-','','아직 값이 없어요','야외 러닝을 하면 가민이 계산해요');
+  if(tl&&tl.acwr!=null){var aw=tl.acwr;gcard(g,aw>1.5?'bad':aw<0.8?'wn':'ok','부하 비율',aw.toFixed(2),'',(tl.ts?'훈련 상태 '+tsName(tl.ts):'급성÷만성'),'목표 0.8~1.5')}
+  else gcard(g,'nu','부하 비율','-','','동기화 후 표시돼요','목표 0.8~1.5');
+  gcard(g,hi7>=20&&hi7<=60?'ok':hi7>80||hi7<10?'bad':'wn','고강도 시간 (존4~5)',hi7,'분','최근 7일 합계','목표 주 20~60분');
+  gcard(g,hard7>=2&&hard7<=3&&streak<3?'ok':hard7>4||streak>=3?'bad':'wn','강한 날',hard7,'회','연속 '+streak+'일'+(mid7?' · 애매한 날 '+mid7+'회':''),'목표 주 2~3회, 연속 2일까지');
+  gcard(g,z2long>=1?'ok':'wn','존2 40분 운동',z2long,'회','최근 7일','목표 주 1~2회');
+  gcard(g,slAvg==null?'nu':slAvg>=7*3600?'ok':slAvg>=6.5*3600?'wn':'bad','평균 수면',slAvg!=null?r1(slAvg/3600):'-','시간','최근 7일','목표 7시간 이상');
+
+  // ---- 4주 부하 균형 ----
+  var bal=$('bal');bal.textContent='';
+  if(tl&&tl.loadAnaerobic!=null){
+    [['무산소','loadAnaerobic','#fb7185'],['고강도 유산소','loadHighAerobic','#fbbf24'],['저강도 유산소','loadLowAerobic','#22d3ee']].forEach(function(b){
+      var v=tl[b[1]],mn=tl[b[1]+'Min'],mx=tl[b[1]+'Max'],top=Math.max(v||0,mx||0)*1.15||1;
+      var wrap=el('div','bar'),lb=el('div','lb');lb.appendChild(el('span','',b[0]));
+      var st2=v==null?'':mn!=null&&v<mn?' · 부족':mx!=null&&v>mx?' · 초과':' · 적정';
+      lb.appendChild(el('span','',(v!=null?v:'-')+(mn!=null?' (목표 '+mn+'~'+mx+')':'')+st2));wrap.appendChild(lb);
+      var tr=el('div','tr');if(mn!=null&&mx!=null){var tg=el('div','tg');tg.style.left=(mn/top*100)+'%';tg.style.width=((mx-mn)/top*100)+'%';tr.appendChild(tg)}
+      var fl=el('div','fl');fl.style.width=((v||0)/top*100)+'%';fl.style.background=b[2];tr.appendChild(fl);wrap.appendChild(tr);bal.appendChild(wrap)});
+    $('baln').textContent=(tl.lf?'가민 피드백: '+balName(tl.lf)+' · ':'')+'초록 칸이 가민이 정한 목표 범위예요. ('+md(tl.d)+' 기준)';
+  }else{bal.appendChild(el('div','sub','다음 동기화부터 가민의 4주 부하 균형이 표시돼요.'));$('baln').textContent=''}
+
+  Chart.defaults.color=cv('--mu');Chart.defaults.borderColor=cv('--bd');
+  var A1=cv('--a1'),A2=cv('--a2'),HOT=cv('--hot'),OK=cv('--ok'),WN=cv('--wn');
+
+  // 부하 비율 추이
+  var w30=well.filter(function(w){return w.d>new Date(now-30*DAY)}),ac30=w30.filter(function(w){return w.acwr!=null});
+  draw('c6','c6',{type:'line',data:{labels:ac30.map(function(w){return md(w.d)}),datasets:[
+    {label:'부하 비율',data:ac30.map(function(w){return w.acwr}),borderColor:A1,backgroundColor:A1,tension:.3},
+    {label:'상한 1.5',data:ac30.map(function(){return 1.5}),borderColor:HOT,borderDash:[5,4],pointRadius:0,borderWidth:1},
+    {label:'하한 0.8',data:ac30.map(function(){return 0.8}),borderColor:WN,borderDash:[5,4],pointRadius:0,borderWidth:1}]},
+    options:{maintainAspectRatio:false,scales:{y:{suggestedMin:0.5,suggestedMax:2}}}});
+  $('an').textContent=ac30.length?'0.8~1.5 사이가 안전하게 실력이 느는 구간이에요.':'다음 동기화부터 쌓여요.';
+
+  // 주간 강도 분포
+  var w0=wk(now),lb=[],lo=[],mi=[],hi=[];
+  for(var i=11;i>=0;i--){var ws=new Date(w0);ws.setDate(ws.getDate()-7*i);var we=new Date(ws);we.setDate(we.getDate()+7);lb.push(md(ws));
+    var wa=acts.filter(function(a){return a.d>=ws&&a.d<we});
+    lo.push(Math.round(wa.reduce(function(s,a){return s+a.lo},0)));mi.push(Math.round(wa.reduce(function(s,a){return s+a.mi},0)));hi.push(Math.round(wa.reduce(function(s,a){return s+a.hi},0)))}
+  draw('c1','c1',{type:'bar',data:{labels:lb,datasets:[{label:'저강도 존1~2',data:lo,backgroundColor:A2},{label:'중강도 존3',data:mi,backgroundColor:WN},{label:'고강도 존4~5',data:hi,backgroundColor:HOT}]},
+    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+
+  // 세션별 운동 효과
+  var r15=acts.slice(-15),gc={hard:HOT,easy:OK,mid:WN};
+  draw('c2','c2',{data:{labels:r15.map(function(a){return md(a.d)}),datasets:[
+    {type:'bar',label:'무산소 TE',data:r15.map(function(a){return a.an}),backgroundColor:r15.map(function(a){return(gc[a.g]||'#64748b')+'cc'}),borderRadius:4},
+    {type:'bar',label:'유산소 TE',data:r15.map(function(a){return a.ae}),backgroundColor:A2+'66',borderRadius:4},
+    {type:'line',label:'평균 심박',data:r15.map(function(a){return a.hr}),borderColor:A1,backgroundColor:A1,tension:.3,yAxisID:'y1'}]},
+    options:{maintainAspectRatio:false,scales:{y:{min:0,max:5,title:{display:true,text:'TE'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'bpm'}}}}});
+
+  // HRV + 안정시 심박
+  draw('c4','c4',{type:'line',data:{labels:w30.map(function(w){return md(w.d)}),datasets:[
+    {label:'HRV 지난밤',data:w30.map(function(w){return w.hrvLastNight}),borderColor:A2,backgroundColor:A2,tension:.3,spanGaps:true},
+    {label:'HRV 주평균',data:w30.map(function(w){return w.hrvWeeklyAvg}),borderColor:A1,backgroundColor:A1,borderDash:[5,4],tension:.3,spanGaps:true,pointRadius:0},
+    {label:'안정시 심박',data:w30.map(function(w){return w.restingHR}),borderColor:HOT,backgroundColor:HOT,tension:.3,spanGaps:true,yAxisID:'y1'}]},
+    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'HRV ms'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'bpm'}}}}});
+  $('hn').textContent='HRV 주평균은 오르고, 안정시 심박은 낮게 유지되면 회복력이 좋아지는 중이에요.';
+
+  // 수면
+  var w14=well.filter(function(w){return w.sleepSec}).slice(-14),H=function(v){return v==null?0:+(v/3600).toFixed(2)};
+  draw('c5','c5',{data:{labels:w14.map(function(w){return md(w.d)}),datasets:[
+    {type:'bar',label:'깊은 수면',data:w14.map(function(w){return H(w.deepSec)}),backgroundColor:A1,stack:'s'},
+    {type:'bar',label:'얕은 수면',data:w14.map(function(w){return H(w.lightSec)}),backgroundColor:A2+'99',stack:'s'},
+    {type:'bar',label:'REM',data:w14.map(function(w){return H(w.remSec)}),backgroundColor:'#f472b6',stack:'s'},
+    {type:'line',label:'목표 7시간',data:w14.map(function(){return 7}),borderColor:OK,borderDash:[5,4],pointRadius:0,borderWidth:1}]},
+    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+  $('sn').textContent=w14.length?'14일 평균 '+hm(w14.reduce(function(s,w){return s+w.sleepSec},0)/w14.length):'수면 데이터가 아직 없어요.';
+
+  // 운동 요약 (기간 선택)
+  buildPer(acts,now);var R=range(now),s=acts.filter(function(a){return a.d>=R.f&&a.d<=R.t});
+  var sm=$('sum');sm.textContent='';$('pt').textContent='· '+R.lab;
+  var cnt=function(x){return s.filter(function(a){return a.g===x}).length},an=s.filter(function(a){return a.an!=null});
+  stat(sm,'세션 수',s.length,'회','주평균 '+(s.length/(R.days/7)).toFixed(1)+'회');
+  stat(sm,'강한 / 쉬운 / 애매한',cnt('hard')+' / '+cnt('easy')+' / '+cnt('mid'),'','무산소 효과 기준');
+  stat(sm,'총 운동 시간',Math.round(s.reduce(function(t,a){return t+a.min},0)),'분','');
+  stat(sm,'고강도 시간 (존4~5)',Math.round(s.reduce(function(t,a){return t+a.hi},0)),'분','주평균 '+Math.round(s.reduce(function(t,a){return t+a.hi},0)/(R.days/7))+'분');
+  stat(sm,'평균 무산소 효과',an.length?(an.reduce(function(t,a){return t+a.an},0)/an.length).toFixed(1):'-','','');
+
+  // 최근 세션 표
+  var tb=$('tb');tb.textContent='';
+  acts.slice(-10).reverse().forEach(function(a){var tr=el('tr');
+    [ymd(a.d),a.name].forEach(function(v){tr.appendChild(el('td','',String(v)))});
+    var td=el('td');if(a.g)td.appendChild(el('span','bd '+a.g,GN[a.g]));tr.appendChild(td);
+    [Math.round(a.min)+'분',(a.hr||'-')+' / '+(a.mx||'-'),a.ae!=null?a.ae.toFixed(1):'-',a.an!=null?a.an.toFixed(1):'-',Math.round(a.hi)+'분',a.tl||'-']
+      .forEach(function(v){tr.appendChild(el('td','n',String(v)))});
+    tb.appendChild(tr)});
+}
 function range(now){
   if(per==='r28')return{f:new Date(now-28*DAY),t:now,days:28,lab:'최근 28일'};
   var p=per.split('-'),y=+p[0],m=+p[1]-1,f=new Date(y,m,1),e=new Date(y,m+1,1),cur=e>now,t=cur?now:e;
@@ -116,150 +322,12 @@ function buildPer(acts,now){
   ks.forEach(function(k){var p=k.split('-'),o2=el('option','',p[1]+'월'+(+p[0]!==cy?' ('+p[0]+'년)':'')+(k===ck?' · 이번 달':''));o2.value=k;s.appendChild(o2)});
   s.value=per;
 }
-function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
-function gOf(t){return(t==='hiit'||t==='indoor_cardio')?'hiit':(RUN.indexOf(t)>=0?'run':'etc')}
-function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
-function stat(box,k,v,u,s,dl){var c=el('div','card');c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));if(dl)x.appendChild(el('span','dl '+dl[0],dl[1]));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));box.appendChild(c)}
-function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
-
-async function load(){
-  var u=st('g','garminUrl'),k=st('g','garminKey');
-  if(!u||!k){show('setup');return}
-  show('load');
-  try{
-    var r=await fetch(u+'?key='+encodeURIComponent(k)),d=await r.json();
-    if(!d.ok)throw new Error(d.error==='unauthorized'?'키가 맞지 않아요.':'데이터를 불러오지 못했어요.');
-    D=d;render();show('dash');
-  }catch(e){$('err').textContent=e.message||'불러오지 못했어요. 주소와 키를 확인해 주세요.';show('setup')}
-}
-
-function render(){
-  var now=new Date(),t28=new Date(now-28*DAY),t7=new Date(now-7*DAY);
-  var acts=(D.rows||[]).map(function(r){return{d:pd(r.startTime),g:gOf(r.type),name:r.name||r.type,min:(num(r.durationSec)||0)/60,
-    hr:num(r.avgHR),mx:num(r.maxHR),an:r1(num(r.anaerobicTE)),tl:num(r.trainingLoad),kc:num(r.calories),km:num(r.distanceKm)||0,
-    z:[1,2,3,4,5].map(function(i){return num(r['z'+i+'Sec'])||0})}}).filter(function(a){return!isNaN(a.d.getTime())}).sort(function(a,b){return a.d-b.d});
-  var well=(D.wellness||[]).map(function(w){return{d:new Date(String(w.date)+'T00:00:00'),sl:num(w.sleepSec),dp:num(w.deepSec),lt:num(w.lightSec),rm:num(w.remSec),aw:num(w.awakeSec),
-    sc:num(w.sleepScore),hv:num(w.hrvLastNight),hw:num(w.hrvWeeklyAvg),hs:w.hrvStatus||'',rh:num(w.restingHR),bh:num(w.bodyBatteryHigh),bl:num(w.bodyBatteryLow),
-    ss:num(w.avgStress),rd:num(w.trainingReadiness)}}).filter(function(w){return!isNaN(w.d.getTime())}).sort(function(a,b){return a.d-b.d});
-  buildPer(acts,now);var sel=acts.filter(function(a){return grp==='all'||a.g===grp}),R=range(now),s28=sel.filter(function(a){return a.d>=R.f&&a.d<=R.t});
-  var tw=well.filter(function(w){return w.sl||w.hv||w.rd||w.rh}).pop();
-
-  // 오늘의 한줄 (규칙 기반)
-  var h=$('hint'),hi7=acts.filter(function(a){return a.g==='hiit'&&a.d>t7}).length,bad=[],wn=[];
-  if(tw){
-    if(tw.rd!=null&&tw.rd<40)bad.push('훈련 준비도 '+tw.rd);
-    if(tw.sc!=null&&tw.sc<60)wn.push('수면 점수 '+tw.sc);
-    if(tw.hs&&tw.hs!=='BALANCED')wn.push('HRV 상태 '+tw.hs);
-  }
-  if(hi7>=4)wn.push('최근 7일 HIIT '+hi7+'회');
-  if(!tw&&!acts.length){h.className='hint nu';h.textContent='아직 데이터가 없어요. 동기화가 끝나면 표시됩니다.'}
-  else if(bad.length){h.className='hint bad';h.textContent='회복이 부족해 보여요 ('+bad.concat(wn).join(', ')+'). 오늘은 강도를 낮추거나 쉬어가는 걸 권해요.'}
-  else if(wn.length){h.className='hint wn';h.textContent='주의 신호: '+wn.join(', ')+'. 고강도는 가볍게 가져가거나 회복 시간을 챙겨보세요.'}
-  else{h.className='hint ok';h.textContent=tw?'컨디션이 양호해요. 계획한 훈련을 진행해도 좋아요.':'최근 운동 기록을 불러왔어요. 건강 데이터는 동기화 후 표시됩니다.'}
-
-  // 컨디션 카드
-  var c=$('cond');c.textContent='';$('cd').textContent='('+(now.getMonth()+1)+'월 '+now.getDate()+'일 '+'일월화수목금토'[now.getDay()]+'요일)';
-  if(tw){
-    stat(c,'수면',tw.sl?hm(tw.sl):'-','',tw.sc!=null?'점수 '+tw.sc+' · '+gr(tw.sc):'');
-    stat(c,'HRV(지난밤)',tw.hv!=null?tw.hv:'-','ms',tw.hw!=null?'주평균 '+tw.hw+(tw.hs?' · '+tw.hs:''):tw.hs);
-    stat(c,'바디배터리',tw.bh!=null?tw.bh:'-','',tw.bl!=null?'최저 '+tw.bl:'');
-    stat(c,'안정시 심박',tw.rh!=null?tw.rh:'-','bpm',tw.ss!=null?'스트레스 '+tw.ss:'');
-    var pv=well.filter(function(w){return w.rd!=null&&w.d<tw.d}).pop(),dl=null;
-    if(tw.rd!=null&&pv){var df=tw.rd-pv.rd;dl=df>0?['up','▲ '+df]:df<0?['dn','▼ '+(-df)]:['eq','– 0']}
-    stat(c,'훈련 준비도',tw.rd!=null?tw.rd:'-','',tw.d?md(tw.d)+' 기준'+(dl?' · 전일 대비':''):'',dl);
-  }else stat(c,'건강 데이터','없음','','wellness 시트에 데이터가 들어오면 표시돼요');
-
-  // 운동 요약
-  var sm=$('sum');sm.textContent='';$('pt').textContent='· '+R.lab;$('zt').textContent='· '+R.lab;
-  var tm=s28.reduce(function(a,x){return a+x.min},0),hrs=s28.filter(function(x){return x.hr}),an=s28.filter(function(x){return x.an!=null});
-  stat(sm,'세션 수',s28.length,'회','주평균 '+(s28.length/(R.days/7)).toFixed(1)+'회');
-  stat(sm,'총 운동 시간',Math.round(tm),'분','');
-  stat(sm,'평균 심박',hrs.length?Math.round(hrs.reduce(function(a,x){return a+x.hr},0)/hrs.length):'-','bpm','');
-  stat(sm,'평균 무산소 효과',an.length?(an.reduce(function(a,x){return a+x.an},0)/an.length).toFixed(1):'-','','');
-  stat(sm,'소모 칼로리',Math.round(s28.reduce(function(a,x){return a+(x.kc||0)},0)),'kcal','');
-
-  Chart.defaults.color=cv('--mu');Chart.defaults.borderColor=cv('--bd');
-  var A1=cv('--a1'),A2=cv('--a2'),HOT=cv('--hot');
-
-  // 주간 운동 시간 (종류별 누적)
-  var tw0=wk(now),lb=[],ser={hiit:[],run:[],etc:[]};
-  for(var i=11;i>=0;i--){var ws=new Date(tw0);ws.setDate(ws.getDate()-7*i);var we=new Date(ws);we.setDate(we.getDate()+7);lb.push(md(ws));
-    ['hiit','run','etc'].forEach(function(g){ser[g].push(Math.round(acts.filter(function(a){return a.g===g&&a.d>=ws&&a.d<we}).reduce(function(s,a){return s+a.min},0)))})}
-  draw('c1','c1',{type:'bar',data:{labels:lb,datasets:[{label:'HIIT',data:ser.hiit,backgroundColor:A1},{label:'러닝',data:ser.run,backgroundColor:A2},{label:'기타',data:ser.etc,backgroundColor:'#64748b'}]},
-    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
-
-  // 세션별 심박 + 무산소 효과
-  var r15=sel.slice(-15);
-  draw('c2','c2',{data:{labels:r15.map(function(a){return md(a.d)}),datasets:[
-    {type:'bar',label:'무산소 TE',data:r15.map(function(a){return a.an}),backgroundColor:A1+'aa',yAxisID:'y1',borderRadius:4},
-    {type:'line',label:'평균 심박',data:r15.map(function(a){return a.hr}),borderColor:A2,backgroundColor:A2,tension:.3},
-    {type:'line',label:'최대 심박',data:r15.map(function(a){return a.mx}),borderColor:HOT,backgroundColor:HOT,tension:.3}]},
-    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'bpm'}},y1:{position:'right',min:0,max:5,grid:{drawOnChartArea:false}}}}});
-
-  // 심박 존
-  var zs=[0,0,0,0,0];s28.forEach(function(a){a.z.forEach(function(v,i){zs[i]+=v})});var zt=zs.reduce(function(a,b){return a+b},0);
-  draw('c3','c3',{type:'bar',data:{labels:['존1','존2','존3','존4','존5'],datasets:[{data:zs.map(function(v){return zt?+(v/zt*100).toFixed(1):0}),
-    backgroundColor:['#94a3b8','#34d399','#fbbf24','#fb923c','#fb7185'],borderRadius:6}]},
-    options:{maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,title:{display:true,text:'%'}}}}});
-  $('zn').textContent=zt?'':'심박 존 데이터가 아직 없어요.';
-
-  // HRV
-  var w30=well.filter(function(w){return w.d>new Date(now-30*DAY)});
-  draw('c4','c4',{type:'line',data:{labels:w30.map(function(w){return md(w.d)}),datasets:[
-    {label:'지난밤 평균',data:w30.map(function(w){return w.hv}),borderColor:A2,backgroundColor:A2,tension:.3,spanGaps:true},
-    {label:'주평균',data:w30.map(function(w){return w.hw}),borderColor:A1,backgroundColor:A1,borderDash:[5,4],tension:.3,spanGaps:true,pointRadius:0}]},
-    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'ms'}}}}});
-  $('hn').textContent=w30.some(function(w){return w.hv!=null})?'':'HRV 데이터가 아직 없어요.';
-
-  // 수면
-  var w14=well.filter(function(w){return w.sl}).slice(-14),H=function(v){return v==null?0:+(v/3600).toFixed(2)};
-  draw('c5','c5',{type:'bar',data:{labels:w14.map(function(w){return md(w.d)}),datasets:[
-    {label:'깊은 수면',data:w14.map(function(w){return H(w.dp)}),backgroundColor:A1},
-    {label:'얕은 수면',data:w14.map(function(w){return H(w.lt)}),backgroundColor:A2+'99'},
-    {label:'REM',data:w14.map(function(w){return H(w.rm)}),backgroundColor:'#f472b6'},
-    {label:'깸',data:w14.map(function(w){return H(w.aw)}),backgroundColor:'#64748b'}]},
-    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
-  $('sn').textContent=w14.length?'':'수면 데이터가 아직 없어요.';
-  var q=$('sq');q.textContent='';
-  if(w14.length){
-    var L=w14[w14.length-1],av=function(k){var v=w14.map(function(w){return w[k]}).filter(function(x){return x!=null});return v.length?v.reduce(function(a,b){return a+b},0)/v.length:null};
-    var pc=function(a,b){return a!=null&&b?Math.round(a/b*100):null};
-    var lb2=function(v,lo,hi){return v==null?'-':v+'% ('+(v<lo?'낮음':v>hi?'높음':'적정')+')'};
-    var l1=el('div','',md(L.d)+' 수면 '+(L.sc!=null?L.sc+'점 · '+gr(L.sc):'점수 없음'));l1.style.fontWeight='700';
-    if(L.sc!=null)l1.style.color=L.sc>=80?cv('--ok'):L.sc>=60?cv('--wn'):cv('--hot');
-    q.appendChild(l1);
-    var dm=Math.round((L.sl-7*3600)/60);
-    q.appendChild(el('div','','수면 시간 '+hm(L.sl)+' · '+(dm>=0?'권장 7시간 충족':'권장(7~9시간)보다 '+(-dm)+'분 부족')));
-    q.appendChild(el('div','','깊은 수면 '+lb2(pc(L.dp,L.sl),13,23)+' · REM '+lb2(pc(L.rm,L.sl),20,25)+' · 깸 '+(L.aw!=null?Math.round(L.aw/(L.sl+L.aw)*100)+'%':'-')));
-    var as=av('sc'),ah=av('sl');
-    q.appendChild(el('div','','14일 평균 '+(as!=null?Math.round(as)+'점 ('+gr(as)+')':'점수 없음')+' · 평균 수면 '+(ah!=null?hm(ah):'-')));
-    q.appendChild(el('div','','※ 등급은 가민 점수 구간, 단계 비율은 일반적인 참고 범위예요.'));
-  }
-
-  // AI 코칭
-  var cs=(D.coaching||[]).filter(function(x){return x&&x.text}).sort(function(a,b){return String(a.date)<String(b.date)?-1:1}),cl=cs[cs.length-1];
-  $('coachBox').classList.toggle('hide',!cl);
-  if(cl){$('coachDate').textContent='· '+String(cl.date).slice(0,10);$('coachText').textContent=cl.text}
-  var lastDay=acts.length?acts[acts.length-1].d.toDateString():'',tdA=acts.filter(function(a){return a.d.toDateString()===lastDay});
-  window.__prompt=acts.length?('고강도 인터벌 트레이닝을 하는 사람의 코치로서 오늘 운동을 한국어로 8줄 이내로 리뷰하고 내일 훈련을 제안해줘.\n[최근 운동]\n'+
-    tdA.map(function(a){return md(a.d)+' '+a.name+' '+Math.round(a.min)+'분 평균심박 '+(a.hr||'-')+' 최대 '+(a.mx||'-')+' 무산소TE '+(a.an!=null?a.an:'-')+' 부하 '+(a.tl||'-')}).join('\n')+
-    (tw?'\n[컨디션] 수면 '+(tw.sl?hm(tw.sl):'-')+' 점수 '+(tw.sc!=null?tw.sc:'-')+', HRV '+(tw.hv!=null?tw.hv:'-')+', 안정시심박 '+(tw.rh!=null?tw.rh:'-')+', 훈련준비도 '+(tw.rd!=null?tw.rd:'-'):'')):'';
-  // 표
-  var tb=$('tb');tb.textContent='';
-  sel.slice(-8).reverse().forEach(function(a){var tr=el('tr');
-    [[a.d.getFullYear()+'-'+String(a.d.getMonth()+1).padStart(2,'0')+'-'+String(a.d.getDate()).padStart(2,'0'),''],[a.name,''],
-     [Math.round(a.min)+'분','n'],[a.hr||'-','n'],[a.mx||'-','n'],[a.an!=null?a.an.toFixed(1):'-','n'],[a.tl||'-','n'],[a.kc||'-','n']].forEach(function(c){tr.appendChild(el('td',c[1],String(c[0])))});
-    tb.appendChild(tr)});
-}
 
 $('save').onclick=function(){var u=$('u').value.trim(),k=$('k').value.trim();if(!u||!k){$('err').textContent='주소와 키를 모두 입력해 주세요.';return}
   st('s','garminUrl',u);st('s','garminKey',k);$('err').textContent='';load()};
 $('rf').onclick=load;
-$('cp').onclick=function(){var t=window.__prompt||'';if(!t){$('cpn').textContent='운동 데이터가 없어요';return}try{navigator.clipboard.writeText(t).then(function(){$('cpn').textContent='복사됨 - Claude 채팅에 붙여넣으세요'},function(){$('cpn').textContent='복사 실패'})}catch(e){$('cpn').textContent='복사 실패'}};
 $('per').onchange=function(){per=this.value;render()};
 $('rs').onclick=function(){st('d','garminUrl');st('d','garminKey');$('k').value='';show('setup')};
-$('seg').onclick=function(e){var g=e.target.getAttribute&&e.target.getAttribute('data-g');if(!g||!D)return;grp=g;
-  Array.prototype.forEach.call($('seg').children,function(b){b.classList.toggle('on',b===e.target)});render()};
 load();
 </script>
 </body>
