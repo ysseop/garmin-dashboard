@@ -49,6 +49,17 @@ def val(x):
     return x if x not in (None, 0, "") else ""
 
 
+def norm_time(s):
+    """'2026-11-18 6:26:55'처럼 자릿수가 들쭉날쭉해도 '2026-11-18 06:26:55'로 맞춤."""
+    s = str(s or "").replace("T", " ").split(".")[0]
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M"):
+        try:
+            return dt.datetime.strptime(s, fmt).strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            pass
+    return s
+
+
 def build_activity(client, a):
     atype = (a.get("activityType") or {}).get("typeKey", "")
     zones = {1: "", 2: "", 3: "", 4: "", 5: ""}
@@ -61,7 +72,7 @@ def build_activity(client, a):
 
     return {
         "activityId": a["activityId"],
-        "startTime": a.get("startTimeLocal", ""),
+        "startTime": norm_time(a.get("startTimeLocal")),
         "type": atype,
         "name": a.get("activityName", ""),
         "distanceKm": round((a.get("distance") or 0) / 1000, 2),
