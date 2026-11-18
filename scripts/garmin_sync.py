@@ -92,7 +92,55 @@ def build_activity(client, a):
     }
 
 
-def build_wellness(client, day):
+def pick_device(m):
+    """가민은 기기별로 값을 줌 -> 주 기기(primaryTrainingDevice) 값을 고름."""
+    if not isinstance(m, dict) or not m:
+        return {}
+    vals = [v for v in m.values() if isinstance(v, dict)]
+    for v in vals:
+        if v.get("primaryTrainingDevice"):
+            return v
+    return vals[0] if vals else {}
+
+
+def num(x, nd=1):
+    try:
+        return round(float(x), nd) if nd else int(round(float(x)))
+    except (TypeError, ValueError):
+        return None
+
+
+def training_fields(client, s):
+    """VO2max, 훈련 상태, 급성/만성 부하, 4주 부하 균형(무산소/고강도 유산소/저강도 유산소)."""
+    ts = safe(client.get_training_status, s) or {}
+    vo2 = ((ts.get("mostRecentVO2Max") or {}).get("generic")) or {}
+    st = pick_device((ts.get("mostRecentTrainingStatus") or {}).get("latestTrainingStatusData"))
+    ac = st.get("acuteTrainingLoadDTO") or {}
+    lb = pick_device((ts.get("mostRecentTrainingLoadBalance") or {}).get("metricsTrainingLoadBalanceDTOMap"))
+    ratio = ac.get("dailyAcuteChronicWorkloadRatio")
+    if ratio is None and ac.get("acwrPercent") is not None:
+        ratio = ac["acwrPercent"] / 100
+    return {
+        "vo2max": val(num(vo2.get("vo2MaxPreciseValue") or vo2.get("vo2MaxValue"))),
+        "trainingStatus": st.get("trainingStatusFeedbackPhrase") or "",
+        "acuteLoad": val(num(ac.get("dailyTrainingLoadAcute"), 0)),
+        "chronicLoad": val(num(ac.get("dailyTrainingLoadChronic"), 0)),
+        "acwr": val(num(ratio, 2)),
+        "acwrStatus": ac.get("acwrStatus") or "",
+        "loadAnaerobic": val(num(lb.get("monthlyLoadAnaerobic"), 0)),
+        "loadAnaerobicMin": val(num(lb.get("monthlyLoadAnaerobicTargetMin"), 0)),
+        "loadAnaerobicMax": val(num(lb.get("monthlyLoadAnaerobicTargetMax"), 0)),
+        "loadHighAerobic": val(num(lb.get("monthlyLoadAerobicHigh"), 0)),
+        "loadHighAerobicMin": val(num(lb.get("monthlyLoadAerobicHighTargetMin"), 0)),
+        "loadHighAerobicMax": val(num(lb.get("monthlyLoadAerobicHighTargetMax"), 0)),
+        "loadLowAerobic": val(num(lb.get("monthlyLoadAerobicLow"), 0)),
+        "loadLowAerobicMin": val(num(lb.get("monthlyLoadAerobicLowTargetMin"), 0)),
+        "loadLowAerobicMax": val(num(lb.get("monthlyLoadAerobicLowTargetMax"), 0)),
+        "loadFeedback": lb.get("trainingBalanceFeedbackPhrase") or "",
+    }
+
+
+def build_wellness(client, day, with_training=True):
     s = day.isoformat()
     stats = safe(client.get_stats, s) or {}
     sleep = safe(client.get_sleep_data, s) or {}
@@ -124,6 +172,8 @@ def build_wellness(client, day):
         "steps": val(stats.get("totalSteps")),
         "trainingReadiness": val(ready.get("score")),
     }
+    if with_training:
+        row.update(training_fields(client, s))
     # 날짜 말고 채워진 값이 하나도 없으면 보내지 않음
     has_data = any(v != "" for k, v in row.items() if k != "date")
     return row if has_data else None
@@ -180,12 +230,35 @@ def coach(act_rows, well_rows):
         f"HRV {w['hrvLastNight'] or '-'}({w['hrvStatus'] or '-'}), 안정시심박 {w['restingHR'] or '-'}, "
         f"바디배터리 {w['bodyBatteryHigh'] or '-'}/{w['bodyBatteryLow'] or '-'}, 훈련준비도 {w['trainingReadiness'] or '-'}"
         for w in well)
+    tw = next((w for w in sorted(well_rows, key=lambda w: w["date"], reverse=True)
+               if w.get("acwr") not in (None, "") or w.get("loadAnaerobic") not in (None, "")), {})
+    g = lambda k: tw.get(k) if tw.get(k) not in (None, "") else "-"
+    tl = (f"VO2max {g('vo2max')}, 훈련상태 {g('trainingStatus')}, 급성/만성 부하 {g('acuteLoad')}/{g('chronicLoad')} "
+          f"(비율 {g('acwr')}, {g('acwrStatus')})\n"
+          f"4주 부하 균형: 무산소 {g('loadAnaerobic')} (목표 {g('loadAnaerobicMin')}~{g('loadAnaerobicMax')}), "
+          f"고강도 유산소 {g('loadHighAerobic')} (목표 {g('loadHighAerobicMin')}~{g('loadHighAerobicMax')}), "
+          f"저강도 유산소 {g('loadLowAerobic')} (목표 {g('loadLowAerobicMin')}~{g('loadLowAerobicMax')}), "
+          f"가민 피드백 {g('loadFeedback')}") if tw else "기록 없음"
+    week = [r for r in act_rows if str(r["startTime"])[:10] > (dt.date.fromisoformat(latest) - dt.timedelta(days=7)).isoformat()]
+    hi_min = round(sum((r["z4Sec"] or 0) + (r["z5Sec"] or 0) for r in week) / 60)
     prompt = (
-        "너는 고강도 인터벌 트레이닝(HIIT, 하이록스 포함)을 주로 하는 아마추어 운동선수의 코치야.\n"
-        "아래 데이터를 보고 한국어로 간결하게 리뷰해줘. 형식: (1) 오늘 운동 한 줄 평가 (2) 잘한 점 (3) 주의할 점 "
-        "(4) 회복 데이터 기반 내일 훈련 제안. 전체 8줄 이내, 의학적 진단은 하지 말고 데이터에 없는 건 추측하지 마.\n\n"
+        "너는 고강도 인터벌 트레이닝(HIIT, 하이록스 포함)을 주로 하는 아마추어 운동선수의 코치야. "
+        "목표는 더 건강해지고 운동능력(VO2max, 무산소 능력, 회복력)을 키우는 것.\n"
+        "판단 기준: 강한 날 = 무산소TE 3.0 이상, 쉬운 날 = 무산소TE 2.0 미만이고 존1~2 위주, "
+        "2.0~2.9가 반복되면 '애매한 날'. 강한 HIIT는 주 2~3회, 고강도 연속은 2일까지, 주 1~2회는 존2 40분 이상, "
+        "주간 존4~5 합계 20~60분, 급성/만성 부하 비율 0.8~1.5, 수면 7시간 이상, 가민 4주 부하 균형은 세 항목 모두 목표 범위 안.\n"
+        "아래 데이터를 보고 한국어로 간결하게 리뷰해줘. 형식:\n"
+        "(1) 오늘 세션 등급(강한 날/쉬운 날/애매한 날)과 한 줄 평가\n"
+        "(2) 잘한 점\n"
+        "(3) 아쉬운 점과 '이렇게 했어야 했다'는 구체적 행동\n"
+        "(4) 이번 주 균형 점검 (부하 균형, 부하 비율, 존4~5 시간 중 기준을 벗어난 것)\n"
+        "(5) 내일 처방: 운동 종류, 시간, 목표 심박 또는 강도 (회복 데이터 반영)\n"
+        "전체 10줄 이내, 숫자를 근거로 말하고, 의학적 진단은 하지 말고 데이터에 없는 건 추측하지 마. "
+        "마크다운 굵게(**) 기호는 쓰지 마.\n\n"
         f"[오늘({latest}) 운동]\n" + "\n".join(line(r) for r in todays) +
         "\n\n[직전 7일 운동]\n" + ("\n".join(line(r) for r in recent) or "기록 없음") +
+        f"\n\n[최근 7일 존4~5 합계] {hi_min}분" +
+        "\n\n[가민 훈련 지표]\n" + tl +
         "\n\n[최근 건강 데이터]\n" + (wl or "기록 없음"))
 
     # 첫 모델이 혼잡(503/429)하거나 느리면 다음 모델로 넘어감
@@ -256,8 +329,10 @@ def main():
         row = build_wellness(client, end - dt.timedelta(days=i))
         if row:
             well_rows.append(row)
-        time.sleep(0.3)  # 호출 간격을 둬서 차단 위험을 줄임
+        time.sleep(0.3)  # 호출 간격을 두서 차단 위험을 줄임
     print(f"가져온 건강 데이터: {len(well_rows)}일")
+    for k in ("vo2max", "acwr", "loadAnaerobic", "loadLowAerobicMin", "trainingStatus"):  # 값은 출력하지 않음
+        print(f"  훈련 지표 {k}: {sum(1 for w in well_rows if w.get(k) not in (None, ''))}일")
     ok_w = post("wellness", well_rows)
 
     try:
