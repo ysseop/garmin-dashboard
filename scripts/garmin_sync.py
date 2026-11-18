@@ -329,7 +329,7 @@ def main():
         row = build_wellness(client, end - dt.timedelta(days=i))
         if row:
             well_rows.append(row)
-        time.sleep(0.3)  # 호출 간격을 두서 차단 위험을 줄임
+        time.sleep(0.3)  # 호출 간격을 둬서 차단 위험을 줄임
     print(f"가져온 건강 데이터: {len(well_rows)}일")
     for k in ("vo2max", "acwr", "loadAnaerobic", "loadLowAerobicMin", "trainingStatus"):  # 값은 출력하지 않음
         print(f"  훈련 지표 {k}: {sum(1 for w in well_rows if w.get(k) not in (None, ''))}일")
