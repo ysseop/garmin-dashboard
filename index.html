@@ -98,7 +98,7 @@ function show(w){['setup','load','dash'].forEach(function(i){$(i).classList.togg
 function cv(n){return getComputedStyle(document.documentElement).getPropertyValue(n).trim()}
 function num(v){return(v===''||v==null||isNaN(Number(v)))?null:Number(v)}
 function md(d){return(d.getMonth()+1)+'/'+d.getDate()}
-function pd(s){return new Date(String(s).replace(' ','T'))}
+function pd(s){s=String(s);var m=s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T](\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);return m?new Date(+m[1],+m[2]-1,+m[3],+m[4],+m[5],+(m[6]||0)):new Date(s.replace(' ','T'))}
 function hm(sec){return sec==null?'-':Math.floor(sec/3600)+'시간 '+Math.round(sec%3600/60)+'분'}
 function gr(s){return s==null?'':s>=90?'우수':s>=80?'좋음':s>=60?'보통':'나쁨'}
 function r1(v){return v==null?null:Math.round(v*10)/10}
