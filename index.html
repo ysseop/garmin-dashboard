@@ -70,6 +70,7 @@ select option{background:var(--bg2);color:var(--tx)}
 <div id="dash" class="hide">
   <div class="hd"><h1>Training Dashboard</h1>
     <div><button id="rf">새로고침</button> <button id="rs">설정 초기화</button></div></div>
+  <div class="sub" id="sy" style="margin:-6px 2px 12px"></div>
 
   <div class="card hide" id="coachBox" style="margin-bottom:12px"><h2>AI 코칭 <span id="coachDate"></span></h2><div id="coachText" style="white-space:pre-wrap;font-size:14px;line-height:1.65"></div></div>
 
@@ -145,7 +146,32 @@ async function load(){
     var r=await fetch(u+'?key='+encodeURIComponent(k)),d=await r.json();
     if(!d.ok)throw new Error(d.error==='unauthorized'?'키가 맞지 않아요.':'데이터를 불러오지 못했어요.');
     D=d;render();show('dash');
-  }catch(e){$('err').textContent=e.message||'불러오지 못했어요. 주소와 키를 확인해 주세요.';show('setup')}
+  }catch(e){$('err').textContent=e.message||'불러오지 못했어요. 주소와 키를 확인해 주세요.';show('setup');return}
+  sync(u,k);
+}
+
+// 새로고침할 때마다 가민 동기화를 요청하고(웹앱이 5분에 한 번으로 제한), 1~3분 동안 새 데이터를 기다림
+var syT=null;
+function sig(d){var r=d.rows||[],w=d.wellness||[],c=d.coaching||[];
+  return r.length+'|'+w.length+'|'+c.length+'|'+JSON.stringify(r[r.length-1]||'')+JSON.stringify(w[w.length-1]||'')+JSON.stringify(c[c.length-1]||'')}
+function hhmm(t){var d=new Date(t);return String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0')}
+async function sync(u,k){
+  clearTimeout(syT);var s=$('sy');
+  try{
+    var r=await fetch(u+'?key='+encodeURIComponent(k)+'&action=sync'),x=await r.json();
+    if(!x.ok||x.started==null){s.textContent=x.error==='no GH_TOKEN'?'즉시 업데이트가 아직 설정되지 않았어요.':'';return}
+    if(!x.started){s.textContent='가민 확인: '+hhmm(x.lastSync)+' (5분 뒤에 다시 확인할 수 있어요)';return}
+  }catch(e){s.textContent='';return}
+  var base=sig(D),n=0,got=false;
+  s.textContent='가민에서 새 기록을 가져오는 중... (1~3분)';
+  async function poll(){
+    n++;
+    try{var d=await(await fetch(u+'?key='+encodeURIComponent(k))).json();
+      if(d.ok&&sig(d)!==sig(D)){D=d;render();got=true}}catch(e){}
+    if(n<10){if(got)s.textContent='새 기록을 반영했어요. 마무리 확인 중...';syT=setTimeout(poll,20000)}
+    else s.textContent=(sig(D)!==base?'업데이트 완료':'새 기록 없음')+' · '+hhmm(Date.now())+' 확인';
+  }
+  syT=setTimeout(poll,20000);
 }
 
 function render(){
