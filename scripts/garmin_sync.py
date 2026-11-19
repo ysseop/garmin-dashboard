@@ -216,8 +216,21 @@ def coach(act_rows, well_rows):
     except Exception:
         pass
 
+    def hi_of(r):
+        return ((r["z4Sec"] or 0) + (r["z5Sec"] or 0)) / 60
+
+    def grade(r):
+        """강한 날: 무산소TE 3.0 이상 또는 존4~5 10분 이상 / 쉬운 날: 무산소TE 2.0 미만이고 존4~5 10분 미만."""
+        an = r["anaerobicTE"]
+        if an in (None, ""):
+            return "-"
+        if float(an) >= 3 or hi_of(r) >= 10:
+            return "강한 날"
+        return "쉬운 날" if float(an) < 2 else "애매한 날"
+
     def line(r):
-        return (f"{str(r['startTime'])[:10]} {r['name']}({r['type']}) {round((r['durationSec'] or 0)/60)}분, "
+        return (f"{str(r['startTime'])[:10]} {r['name']}({r['type']}) [{grade(r)}, 존4~5 {round(hi_of(r))}분] "
+                f"{round((r['durationSec'] or 0)/60)}분, "
                 f"평균심박 {r['avgHR'] or '-'}, 최대 {r['maxHR'] or '-'}, 유산소TE {r['aerobicTE'] or '-'}, "
                 f"무산소TE {r['anaerobicTE'] or '-'}, 부하 {r['trainingLoad'] or '-'}, "
                 f"존(초) {r['z1Sec']}/{r['z2Sec']}/{r['z3Sec']}/{r['z4Sec']}/{r['z5Sec']}, {r['calories']}kcal")
@@ -244,8 +257,10 @@ def coach(act_rows, well_rows):
     prompt = (
         "너는 고강도 인터벌 트레이닝(HIIT, 하이록스 포함)을 주로 하는 아마추어 운동선수의 코치야. "
         "목표는 더 건강해지고 운동능력(VO2max, 무산소 능력, 회복력)을 키우는 것.\n"
-        "판단 기준: 강한 날 = 무산소TE 3.0 이상, 쉬운 날 = 무산소TE 2.0 미만이고 존1~2 위주, "
-        "2.0~2.9가 반복되면 '애매한 날'. 강한 HIIT는 주 2~3회, 고강도 연속은 2일까지, 주 1~2회는 존2 40분 이상, "
+        "판단 기준: 강한 날 = 무산소TE 3.0 이상 또는 존4~5 10분 이상, 쉬운 날 = 무산소TE 2.0 미만이고 존4~5 10분 미만, "
+        "그 사이는 '애매한 날'. 각 운동의 등급은 데이터의 [ ] 안에 계산해 두었으니 그대로 써. "
+        "존4~5를 오래 유지한 날은 무산소TE가 낮아도 고강도 유산소 자극이 충분한 좋은 세션이야. "
+        "2026-11-19부터 심박 존 기준을 바로잡아서(최대 심박 190, 젖산역치 168), 그 이전 기록의 존4~5 시간은 실제보다 적게 나와 있어. 강한 HIIT는 주 2~3회, 고강도 연속은 2일까지, 주 1~2회는 존2 40분 이상, "
         "주간 존4~5 합계 20~60분, 급성/만성 부하 비율 0.8~1.5, 수면 7시간 이상, 가민 4주 부하 균형은 세 항목 모두 목표 범위 안.\n"
         "아래 데이터를 보고 한국어로 간결하게 리뷰해줘. 형식:\n"
         "(1) 오늘 세션 등급(강한 날/쉬운 날/애매한 날)과 한 줄 평가\n"
