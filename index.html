@@ -88,7 +88,7 @@ select option{background:var(--bg2);color:var(--tx)}
   </div>
   <div class="g2">
     <div class="card"><h2>주간 강도 분포 (분, 12주)</h2><div class="cb"><canvas id="c1"></canvas></div><div class="sub">목표: 고강도(존4~5) 주 20~60분, 저강도(존1~2)가 가장 많게</div></div>
-    <div class="card"><h2>세션별 운동 효과 (최근 15회)</h2><div class="cb"><canvas id="c2"></canvas></div><div class="sub">무산소 효과 3.0 이상 = 강한 날, 2.0 미만 = 쉬운 날</div></div>
+    <div class="card"><h2>세션별 운동 효과 (최근 15회)</h2><div class="cb"><canvas id="c2"></canvas></div><div class="sub">강한 날 = 무산소 효과 3.0 이상 또는 존4~5 10분 이상, 쉬운 날 = 무산소 효과 2.0 미만</div></div>
   </div>
   <div class="g2">
     <div class="card"><h2>HRV와 안정시 심박 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
@@ -122,8 +122,8 @@ function r1(v){return v==null?null:Math.round(v*10)/10}
 function el(tag,cls,txt){var e=document.createElement(tag);if(cls)e.className=cls;if(txt!=null)e.textContent=txt;return e}
 function draw(n,id,cfg){if(ch[n])ch[n].destroy();ch[n]=new Chart($(id),cfg)}
 function wk(d){var x=new Date(d);x.setHours(0,0,0,0);x.setDate(x.getDate()-(x.getDay()+6)%7);return x}
-// 세션 등급: 무산소 효과 기준
-function grade(a){return a.an==null?null:a.an>=3?'hard':a.an<2?'easy':'mid'}
+// 세션 등급: 무산소 효과 3.0 이상 또는 존4~5 10분 이상 = 강한 날, 무산소 효과 2.0 미만(존4~5 10분 미만) = 쉬운 날
+function grade(a){return a.an==null?null:(a.an>=3||a.hi>=10)?'hard':a.an<2?'easy':'mid'}
 var GN={hard:'강한 날',easy:'쉬운 날',mid:'애매한 날'};
 // 성장 지표 카드 (상태색 + 한 줄 조언)
 function gcard(box,lvl,k,v,u,s,tip,dl){var c=el('div','card '+lvl);c.appendChild(el('div','k',k));var x=el('div','v',v);if(u)x.appendChild(el('small','',u));if(dl)x.appendChild(el('span','dl '+dl[0],dl[1]));c.appendChild(x);if(s)c.appendChild(el('div','sub',s));if(tip)c.appendChild(el('div','tip',tip));box.appendChild(c)}
@@ -218,8 +218,8 @@ function render(){
   if(tl&&tl.loadAnaerobic!=null&&tl.loadAnaerobicMin!=null&&tl.loadAnaerobic<tl.loadAnaerobicMin)T('wn','무산소 부족: 30초 이하 전력 인터벌을 주 1회 넣으세요.');
   if(tl&&tl.loadAnaerobic!=null&&tl.loadAnaerobicMax!=null&&tl.loadAnaerobic>tl.loadAnaerobicMax)T('wn','무산소 부하가 목표보다 많아요: 전력 인터벌 횟수를 줄이고 그 자리를 존2로 바꾸세요.');
   if(hard7>3)T('wn','최근 7일 강한 날 '+hard7+'회: 주 2~3회면 충분해요. 나머지는 쉬운 날로.');
-  if(hard7<2&&a7.length>=3)T('wn','최근 7일 강한 날 '+hard7+'회: 주 2회는 무산소 효과 3.0 이상까지 확실히 올리세요.');
-  if(mid7>=2)T('wn','애매한 날(무산소 효과 2.0~2.9) '+mid7+'회: 강하게 할 날은 더 세게, 쉬는 날은 확실히 쉽게 나누세요.');
+  if(hard7<2&&a7.length>=3)T('wn','최근 7일 강한 날 '+hard7+'회: 주 2회는 존4~5 10분 이상 또는 무산소 효과 3.0 이상까지 확실히 올리세요.');
+  if(mid7>=2)T('wn','애매한 날(무산소 효과 2.0~2.9, 존4~5 10분 미만) '+mid7+'회: 강하게 할 날은 더 세게, 쉬는 날은 확실히 쉽게 나누세요.');
   if(z2long<1)T('wn','최근 7일 존2 40분 운동 0회: 심폐 기초 체력(VO2max)을 받쳐 주는 운동이에요. 주 1회 이상 넣으세요.');
   if(hi7>80)T('wn','최근 7일 존4~5 '+hi7+'분 (목표 20~60분): 고강도 시간이 많아요.');
   if(hi7<20&&hard7>=2)T('wn','강한 날 '+hard7+'회에 비해 존4~5는 '+hi7+'분뿐이에요. 인터벌 구간에서는 심박을 존4까지 확실히 올리세요.');
@@ -320,7 +320,7 @@ function render(){
   var sm=$('sum');sm.textContent='';$('pt').textContent='· '+R.lab;
   var cnt=function(x){return s.filter(function(a){return a.g===x}).length},an=s.filter(function(a){return a.an!=null});
   stat(sm,'세션 수',s.length,'회','주평균 '+(s.length/(R.days/7)).toFixed(1)+'회');
-  stat(sm,'강한 / 쉬운 / 애매한',cnt('hard')+' / '+cnt('easy')+' / '+cnt('mid'),'','무산소 효과 기준');
+  stat(sm,'강한 / 쉬운 / 애매한',cnt('hard')+' / '+cnt('easy')+' / '+cnt('mid'),'','무산소 효과 + 존4~5 시간 기준');
   stat(sm,'총 운동 시간',Math.round(s.reduce(function(t,a){return t+a.min},0)),'분','');
   stat(sm,'고강도 시간 (존4~5)',Math.round(s.reduce(function(t,a){return t+a.hi},0)),'분','주평균 '+Math.round(s.reduce(function(t,a){return t+a.hi},0)/(R.days/7))+'분');
   stat(sm,'평균 무산소 효과',an.length?(an.reduce(function(t,a){return t+a.an},0)/an.length).toFixed(1):'-','','');
