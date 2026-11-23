@@ -88,7 +88,7 @@ select option{background:var(--bg2);color:var(--tx)}
   </div>
   <div class="g2">
     <div class="card"><h2>주간 강도 분포 (분, 12주)</h2><div class="cb"><canvas id="c1"></canvas></div><div class="sub">목표: 고강도(존4~5) 주 20~60분, 저강도(존1~2)가 가장 많게</div></div>
-    <div class="card"><h2>세션별 운동 효과 (최근 15회)</h2><div class="cb"><canvas id="c2"></canvas></div><div class="sub">강한 날 = 무산소 효과 3.0 이상 또는 존4~5 10분 이상, 쉬운 날 = 무산소 효과 2.0 미만</div></div>
+    <div class="card"><h2>세션별 운동 효과 (최근 15회)</h2><div class="cb"><canvas id="c2"></canvas></div><div class="sub">진한 막대 = 무산소 TE(색은 등급), 연한 막대 = 유산소 TE. 강한 날 = 무산소 3.0 이상(점선) 또는 존4~5 10분 이상, 쉬운 날 = 무산소 2.0 미만. 막대를 누르면 심박·존4~5 시간이 보여요.</div></div>
   </div>
   <div class="g2">
     <div class="card"><h2>HRV와 안정시 심박 (30일)</h2><div class="cb"><canvas id="c4"></canvas></div><div class="sub" id="hn"></div></div>
@@ -270,15 +270,22 @@ function render(){
   }else{bal.appendChild(el('div','sub','다음 동기화부터 가민의 4주 부하 균형이 표시돼요.'));$('baln').textContent=''}
 
   Chart.defaults.color=cv('--mu');Chart.defaults.borderColor=cv('--bd');
+  Chart.defaults.plugins.legend.labels.usePointStyle=true;Chart.defaults.plugins.legend.labels.boxWidth=8;Chart.defaults.plugins.legend.labels.boxHeight=8;
+  Chart.defaults.interaction.mode='index';Chart.defaults.interaction.intersect=false;
+  Chart.defaults.elements.point.radius=2;Chart.defaults.elements.point.hoverRadius=5;
   var A1=cv('--a1'),A2=cv('--a2'),HOT=cv('--hot'),OK=cv('--ok'),WN=cv('--wn');
+  // x축 날짜: 눕히지 않고, 화면 폭에 맞춰 같은 간격으로 표시 (가장 최근 날짜는 항상 보이게)
+  var X=function(o){return Object.assign({grid:{display:false},ticks:{maxRotation:0,autoSkip:false,callback:function(v,i,t){
+    var n=t.length,k=Math.max(1,Math.ceil(n/Math.max(2,Math.floor(this.chart.width/52))));return(n-1-i)%k===0?this.getLabelForValue(v):''}}},o||{})};
 
-  // 부하 비율 추이
+  // 부하 비율 추이 (초록 띠 = 안전 구간 0.8~1.5)
   var w30=well.filter(function(w){return w.d>new Date(now-30*DAY)}),ac30=w30.filter(function(w){return w.acwr!=null});
   draw('c6','c6',{type:'line',data:{labels:ac30.map(function(w){return md(w.d)}),datasets:[
-    {label:'부하 비율',data:ac30.map(function(w){return w.acwr}),borderColor:A1,backgroundColor:A1,tension:.3},
-    {label:'상한 1.5',data:ac30.map(function(){return 1.5}),borderColor:HOT,borderDash:[5,4],pointRadius:0,borderWidth:1},
-    {label:'하한 0.8',data:ac30.map(function(){return 0.8}),borderColor:WN,borderDash:[5,4],pointRadius:0,borderWidth:1}]},
-    options:{maintainAspectRatio:false,scales:{y:{suggestedMin:0.5,suggestedMax:2}}}});
+    {label:'부하 비율',data:ac30.map(function(w){return w.acwr}),borderColor:A1,backgroundColor:A1,tension:.3,borderWidth:2.5},
+    {label:'안전 구간 0.8~1.5',data:ac30.map(function(){return 1.5}),borderColor:OK+'88',backgroundColor:OK+'22',fill:'+1',borderDash:[4,4],pointRadius:0,pointHoverRadius:0,borderWidth:1},
+    {label:'하한',data:ac30.map(function(){return 0.8}),borderColor:OK+'88',borderDash:[4,4],pointRadius:0,pointHoverRadius:0,borderWidth:1}]},
+    options:{maintainAspectRatio:false,plugins:{legend:{labels:{filter:function(l){return l.datasetIndex<2}}},tooltip:{filter:function(t){return t.datasetIndex===0}}},
+      scales:{x:X(),y:{suggestedMin:0.4,suggestedMax:1.8}}}});
   $('an').textContent=ac30.length?'0.8~1.5 사이가 안전하게 실력이 느는 구간이에요.':'다음 동기화부터 쌓여요.';
 
   // 주간 강도 분포
@@ -287,22 +294,26 @@ function render(){
     var wa=acts.filter(function(a){return a.d>=ws&&a.d<we});
     lo.push(Math.round(wa.reduce(function(s,a){return s+a.lo},0)));mi.push(Math.round(wa.reduce(function(s,a){return s+a.mi},0)));hi.push(Math.round(wa.reduce(function(s,a){return s+a.hi},0)))}
   draw('c1','c1',{type:'bar',data:{labels:lb,datasets:[{label:'저강도 존1~2',data:lo,backgroundColor:A2},{label:'중강도 존3',data:mi,backgroundColor:WN},{label:'고강도 존4~5',data:hi,backgroundColor:HOT}]},
-    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+    options:{maintainAspectRatio:false,scales:{x:X({stacked:true}),y:{stacked:true,beginAtZero:true}}}});
 
-  // 세션별 운동 효과
+  // 세션별 운동 효과: 막대 색 = 세션 등급, 연한 막대 = 유산소 TE, 점선 = 강한 날 기준(무산소 3.0)
   var r15=acts.slice(-15),gc={hard:HOT,easy:OK,mid:WN};
   draw('c2','c2',{data:{labels:r15.map(function(a){return md(a.d)}),datasets:[
-    {type:'bar',label:'무산소 TE',data:r15.map(function(a){return a.an}),backgroundColor:r15.map(function(a){return(gc[a.g]||'#64748b')+'cc'}),borderRadius:4},
-    {type:'bar',label:'유산소 TE',data:r15.map(function(a){return a.ae}),backgroundColor:A2+'66',borderRadius:4},
-    {type:'line',label:'평균 심박',data:r15.map(function(a){return a.hr}),borderColor:A1,backgroundColor:A1,tension:.3,yAxisID:'y1'}]},
-    options:{maintainAspectRatio:false,scales:{y:{min:0,max:5,title:{display:true,text:'TE'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'bpm'}}}}});
+    {type:'bar',label:'무산소 TE',data:r15.map(function(a){return a.an}),backgroundColor:r15.map(function(a){return gc[a.g]||'#64748b'}),borderRadius:3,barPercentage:.85,categoryPercentage:.7},
+    {type:'bar',label:'유산소 TE',data:r15.map(function(a){return a.ae}),backgroundColor:A2+'55',borderRadius:3,barPercentage:.85,categoryPercentage:.7},
+    {type:'line',label:'기준 3.0',data:r15.map(function(){return 3}),borderColor:HOT+'99',borderDash:[4,4],pointRadius:0,pointHoverRadius:0,borderWidth:1}]},
+    options:{maintainAspectRatio:false,
+      plugins:{legend:{onClick:function(){},labels:{generateLabels:function(){return[['강한 날',HOT],['애매한 날',WN],['쉬운 날',OK],['유산소 TE',A2+'55']].map(function(x){return{text:x[0],fillStyle:x[1],strokeStyle:x[1],pointStyle:'rectRounded',lineWidth:0}})}}},
+        tooltip:{filter:function(t){return t.datasetIndex<2},callbacks:{title:function(t){var a=r15[t[0].dataIndex];return md(a.d)+' '+a.name+(a.g?' · '+GN[a.g]:'')},
+          afterBody:function(t){var a=r15[t[0].dataIndex];return'존4~5 '+Math.round(a.hi)+'분 · 평균 심박 '+(a.hr||'-')}}}},
+      scales:{x:X(),y:{min:0,max:5,ticks:{stepSize:1},title:{display:true,text:'운동 효과(TE)'}}}}});
 
   // HRV + 안정시 심박
   draw('c4','c4',{type:'line',data:{labels:w30.map(function(w){return md(w.d)}),datasets:[
     {label:'HRV 지난밤',data:w30.map(function(w){return w.hrvLastNight}),borderColor:A2,backgroundColor:A2,tension:.3,spanGaps:true},
     {label:'HRV 주평균',data:w30.map(function(w){return w.hrvWeeklyAvg}),borderColor:A1,backgroundColor:A1,borderDash:[5,4],tension:.3,spanGaps:true,pointRadius:0},
     {label:'안정시 심박',data:w30.map(function(w){return w.restingHR}),borderColor:HOT,backgroundColor:HOT,tension:.3,spanGaps:true,yAxisID:'y1'}]},
-    options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'HRV ms'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'bpm'}}}}});
+    options:{maintainAspectRatio:false,scales:{x:X(),y:{title:{display:true,text:'HRV ms'}},y1:{position:'right',grid:{drawOnChartArea:false},title:{display:true,text:'bpm'}}}}});
   $('hn').textContent='HRV 주평균은 오르고, 안정시 심박은 낮게 유지되면 회복력이 좋아지는 중이에요.';
 
   // 수면
@@ -312,7 +323,7 @@ function render(){
     {type:'bar',label:'얕은 수면',data:w14.map(function(w){return H(w.lightSec)}),backgroundColor:A2+'99',stack:'s'},
     {type:'bar',label:'REM',data:w14.map(function(w){return H(w.remSec)}),backgroundColor:'#f472b6',stack:'s'},
     {type:'line',label:'목표 7시간',data:w14.map(function(){return 7}),borderColor:OK,borderDash:[5,4],pointRadius:0,borderWidth:1}]},
-    options:{maintainAspectRatio:false,scales:{x:{stacked:true},y:{stacked:true,beginAtZero:true}}}});
+    options:{maintainAspectRatio:false,scales:{x:X({stacked:true}),y:{stacked:true,beginAtZero:true}}}});
   $('sn').textContent=w14.length?'14일 평균 '+hm(w14.reduce(function(s,w){return s+w.sleepSec},0)/w14.length):'수면 데이터가 아직 없어요.';
 
   // 운동 요약 (기간 선택)
